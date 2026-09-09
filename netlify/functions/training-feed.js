@@ -610,7 +610,6 @@ function removeDuplicates(trainings) {
 // =========================================
 // RTB
 // =========================================
-
 async function loadRTB() {
   const BASE = "https://www.elearning.rtb.gov.rw";
 
@@ -618,76 +617,31 @@ async function loadRTB() {
   console.log("Loading RTB courses...");
 
   try {
-    // -------------------------------------------------
-    // 1. Load RTB homepage
-    // -------------------------------------------------
-    const homeResponse = await fetch(BASE + "/", {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "text/html,application/xhtml+xml"
-      }
-    });
-
-    if (!homeResponse.ok) {
-      throw new Error(`RTB homepage HTTP ${homeResponse.status}`);
-    }
-
-    const homeHTML = await homeResponse.text();
-
-    console.log("RTB homepage HTML length:", homeHTML.length);
-
-    // -------------------------------------------------
-    // 2. Find RTB category pages
-    // -------------------------------------------------
-    const categoryURLs = new Set();
-
-    const categoryRegex =
-      /href=["']([^"']*course\/index\.php\?[^"']*categoryid=\d+[^"']*)["']/gi;
-
-    let match;
-
-    while ((match = categoryRegex.exec(homeHTML)) !== null) {
-      let url = match[1];
-
-      url = url.replace(/&amp;/g, "&");
-
-      if (url.startsWith("/")) {
-        url = BASE + url;
-      }
-
-      if (url.startsWith(BASE)) {
-        categoryURLs.add(url);
-      }
-    }
-
-    // Also add some known major RTB categories.
-    // These are public RTB Moodle category pages.
-    const knownCategories = [
-      `${BASE}/course/index.php?categoryid=164`,
-      `${BASE}/course/index.php?categoryid=4`,
-      `${BASE}/course/index.php?categoryid=8`,
-      `${BASE}/course/index.php?categoryid=685`,
-      `${BASE}/course/index.php?categoryid=763`,
-      `${BASE}/course/index.php?categoryid=770`,
-      `${BASE}/course/index.php?categoryid=773`
+    // Public RTB Moodle search queries
+    const queries = [
+      "software development",
+      "networking",
+      "computer",
+      "hospitality",
+      "tourism",
+      "food processing",
+      "business",
+      "agriculture",
+      "multimedia",
+      "automotive"
     ];
 
-    knownCategories.forEach(url => categoryURLs.add(url));
+    const allCourses = [];
 
-    console.log(
-      "RTB category pages discovered:",
-      categoryURLs.size
-    );
+    for (const query of queries) {
+      try {
+        const url =
+          BASE +
+          "/course/search.php?search=" +
+          encodeURIComponent(query);
 
-    // Limit crawling so Netlify doesn't hammer RTB.
-    const categoriesToFetch =
-      Array.from(categoryURLs).slice(0, 30);
+        console.log("RTB search:", query);
 
-    // -------------------------------------------------
-    // 3. Fetch category pages
-    // -------------------------------------------------
-    const categoryResults = await Promise.allSettled(
-      categoriesToFetch.map(async url => {
         const response = await fetch(url, {
           headers: {
             "User-Agent": "Mozilla/5.0",
@@ -696,210 +650,184 @@ async function loadRTB() {
         });
 
         if (!response.ok) {
-          throw new Error(
-            `HTTP ${response.status} for ${url}`
+          console.warn(
+            `RTB search failed: ${query} HTTP ${response.status}`
           );
+          continue;
+        }
+
+        const html = await response.text();
+
+        console.log(
+          `RTB ${query} HTML length:`,
+          html.length
+        );
+
+        /*
+         * Moodle course search results contain links like:
+         *
+         * /course/view.php?id=1492
+         *
+         * The course title is inside the same link.
+         */
+        const courseRegex =
+          /<a[^>]+href=["']([^"']*\/course\/view\.php\?id=\d+[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
+
+        let match;
+
+        while ((match = courseRegex.exec(html)) !== null) {
+          let link = match[1];
+
+          let title = match[2]
+            .replace(/<[^>]+>/g, " ")
+            .replace(/&nbsp;/gi, " ")
+            .replace(/&amp;/gi, "&")
+            .replace(/&#39;/gi, "'")
+            .replace(/&quot;/gi, '"')
+            .replace(/&#x27;/gi, "'")
+            .replace(/\s+/g, " ")
+            .trim();
+
+          if (!title || title.length < 3) {
+            continue;
+          }
+
+          if (link.startsWith("/")) {
+            link = BASE + link;
+          }
+
+          if (!link.startsWith("http")) {
+            continue;
+          }
+
+          const idMatch = link.match(
+            /course\/view\.php\?id=(\d+)/
+          );
+
+          if (!idMatch) {
+            continue;
+          }
+
+          const courseId = idMatch[1];
+
+          allCourses.push({
+            id: courseId,
+            title,
+            link
+          });
+        }
+
+      } catch (error) {
+        console.warn(
+          `RTB query failed: ${query}`,
+          error.message
+        );
+      }
+    }
+
+    console.log(
+      "RTB raw courses discovered:",
+      allCourses.length
+    );
+
+    // -------------------------------------------------
+    // Remove duplicate courses
+    // -------------------------------------------------
+
+    const uniqueCourses = removeDuplicates(
+      allCourses.map(course => ({
+        ...course,
+        id: "rtb-" + course.id
+      }))
+    );
+
+    console.log(
+      "RTB unique courses:",
+      uniqueCourses.length
+    );
+
+    // -------------------------------------------------
+    // Convert to ROH training objects
+    // -------------------------------------------------
+
+    const trainings = uniqueCourses
+      .map(course => {
+
+        const title = cleanText(course.title);
+
+        if (!title) {
+          return null;
         }
 
         return {
-          url,
-          html: await response.text()
+          id: course.id,
+
+          title,
+
+          organization:
+            "Rwanda TVET Board (RTB)",
+
+          type:
+            "training",
+
+          category:
+            inferTrainingCategory(title),
+
+          location:
+            "Rwanda",
+
+          country:
+            "Rwanda",
+
+          mode:
+            "Online / E-learning",
+
+          level:
+            inferTrainingLevel(title),
+
+          duration:
+            "Self-paced",
+
+          deadline:
+            "",
+
+          description:
+            `Training course available through the official RTB E-Learning platform.`,
+
+          requirements:
+            "Check the official RTB E-Learning platform for course access and enrollment requirements.",
+
+          link:
+            course.link,
+
+          source:
+            "RTB E-Learning",
+
+          verified:
+            true,
+
+          isExternal:
+            true,
+
+          created_at:
+            new Date().toISOString()
         };
       })
-    );
+      .filter(Boolean);
 
     // -------------------------------------------------
-    // 4. Extract course links
+    // Final duplicate protection
     // -------------------------------------------------
-    const courseLinks = new Map();
 
-    for (const result of categoryResults) {
-      if (result.status !== "fulfilled") {
-        continue;
-      }
-
-      const {
-        url: categoryURL,
-        html
-      } = result.value;
-
-      console.log(
-        "Scanning RTB category:",
-        categoryURL
-      );
-
-      /*
-       * Moodle course links normally look like:
-       *
-       * /course/view.php?id=123
-       *
-       * Some pages use absolute URLs.
-       */
-      const courseRegex =
-        /href=["']([^"']*course\/view\.php\?id=\d+[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
-
-      let courseMatch;
-
-      while (
-        (courseMatch = courseRegex.exec(html)) !== null
-      ) {
-        let href = courseMatch[1];
-
-        let linkText = courseMatch[2]
-          .replace(/<[^>]+>/g, " ")
-          .replace(/&nbsp;/gi, " ")
-          .replace(/&amp;/gi, "&")
-          .replace(/&#39;/gi, "'")
-          .replace(/&quot;/gi, '"')
-          .replace(/\s+/g, " ")
-          .trim();
-
-        if (!href) continue;
-
-        if (href.startsWith("/")) {
-          href = BASE + href;
-        }
-
-        if (!href.startsWith("http")) {
-          continue;
-        }
-
-        if (!linkText) continue;
-
-        // Ignore navigation junk
-        const lower = linkText.toLowerCase();
-
-        if (
-          lower === "view" ||
-          lower === "view course" ||
-          lower === "more" ||
-          lower === "details" ||
-          lower === "course"
-        ) {
-          continue;
-        }
-
-        // Avoid duplicates
-        if (!courseLinks.has(href)) {
-          courseLinks.set(href, {
-            title: linkText,
-            link: href
-          });
-        }
-      }
-    }
-
-    console.log(
-      "RTB course links discovered:",
-      courseLinks.size
-    );
-
-    // -------------------------------------------------
-    // 5. Convert courses to ROH training objects
-    // -------------------------------------------------
-    const trainings = [];
-
-    for (const course of courseLinks.values()) {
-      const title = cleanText(course.title);
-
-      if (!title || title.length < 3) {
-        continue;
-      }
-
-      // Skip obvious Moodle navigation
-      const lowerTitle = title.toLowerCase();
-
-      if (
-        lowerTitle.includes("course categories") ||
-        lowerTitle === "home" ||
-        lowerTitle === "dashboard" ||
-        lowerTitle === "login" ||
-        lowerTitle === "log in"
-      ) {
-        continue;
-      }
-
-      trainings.push({
-        id:
-          "rtb-" +
-          course.link
-            .split("?id=")[1]
-            ?.split("&")[0],
-
-        title,
-
-        organization:
-          "Rwanda TVET Board (RTB)",
-
-        type: "training",
-
-        category:
-          inferTrainingCategory(title),
-
-        location: "Rwanda",
-
-        country: "Rwanda",
-
-        mode:
-          "Online / E-learning",
-
-        level:
-          inferTrainingLevel(title),
-
-        duration:
-          "Self-paced",
-
-        deadline:
-          "",
-
-        description:
-          `Training course available through the official RTB E-Learning platform.`,
-
-        requirements:
-          "Check the official RTB E-Learning course page for access requirements and enrollment information.",
-
-        link:
-          course.link,
-
-        source:
-          "RTB E-Learning",
-
-        verified:
-          true,
-
-        isExternal:
-          true,
-
-        created_at:
-          new Date().toISOString()
-      });
-    }
-
-    // -------------------------------------------------
-    // 6. Remove duplicates
-    // -------------------------------------------------
-    const unique = [];
-    const seen = new Set();
-
-    for (const training of trainings) {
-      const key =
-        training.link ||
-        training.title.toLowerCase();
-
-      if (seen.has(key)) {
-        continue;
-      }
-
-      seen.add(key);
-      unique.push(training);
-    }
+    const finalTrainings =
+      removeDuplicates(trainings);
 
     console.log(
       "RTB trainings found:",
-      unique.length
+      finalTrainings.length
     );
 
-    return unique;
+    return finalTrainings;
 
   } catch (error) {
 
@@ -911,6 +839,8 @@ async function loadRTB() {
     return [];
   }
 }
+
+
 
 // =========================================
 // NETLIFY FUNCTION
