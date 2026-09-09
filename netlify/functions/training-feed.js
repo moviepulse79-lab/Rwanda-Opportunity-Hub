@@ -1152,38 +1152,8 @@ async function loadRTB() {
 
 }
 
-### Then deploy
 
-For this test, I deliberately changed the queries to **only `software`**.
 
-That's important because we don't want to wait 8–10 seconds for 12 requests while we're debugging.
-
-After deploying, open:
-
-`https://rwandaopportunityhub.netlify.app/.netlify/functions/training-feed`
-
-Then go to **Netlify → Functions → training-feed → Logs**.
-
-You should now see something like:
-
-```text
-Loading RTB courses...
-RTB search: software
-RTB URL: https://www.elearning.rtb.gov.rw/course/search.php?perpage=all&search=software
-RTB final URL: ...
-RTB status: ...
-RTB content-type: ...
-RTB HTML length: ...
-RTB preview: ...
-RTB courses found for software: ...
-RTB raw courses: ...
-RTB unique courses: ...
-RTB trainings found: ...
-```
-
-**Send me those lines**, especially `RTB status`, `RTB HTML length`, `RTB preview`, and `RTB courses found for software`.
-
-Then we'll know exactly why RTB is returning `0`.
 
 // =========================================
 // NETLIFY FUNCTION
