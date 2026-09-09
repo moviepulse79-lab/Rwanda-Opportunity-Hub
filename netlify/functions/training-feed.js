@@ -608,6 +608,7 @@ function removeDuplicates(trainings) {
   });
 }
 
+
 // =========================================
 // RTB
 // =========================================
@@ -622,34 +623,14 @@ async function loadRTB() {
 
     try {
 
-        /*
-         * RTB Moodle search pages.
-         *
-         * We use several searches because RTB's
-         * catalogue contains many different fields.
-         */
-
         const queries = [
-            "software",
-            "networking",
-            "computer",
-            "programming",
-            "database",
-            "business",
-            "hospitality",
-            "tourism",
-            "agriculture",
-            "food",
-            "multimedia",
-            "automotive"
+            "software"
         ];
-
 
         const courses = [];
 
-
         // =========================================
-        // FETCH SEARCH RESULTS
+        // FETCH ONE RTB SEARCH FIRST
         // =========================================
 
         for (const query of queries) {
@@ -661,26 +642,47 @@ async function loadRTB() {
                     "/course/search.php?perpage=all&search=" +
                     encodeURIComponent(query);
 
-
-                console.log(
-                    "RTB search:",
-                    query
-                );
-
+                console.log("RTB search:", query);
+                console.log("RTB URL:", searchURL);
 
                 const response =
                     await fetch(
                         searchURL,
                         {
+                            redirect: "follow",
+
                             headers: {
                                 "User-Agent":
                                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
 
                                 "Accept":
-                                    "text/html,application/xhtml+xml"
+                                    "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+
+                                "Referer":
+                                    BASE + "/"
                             }
                         }
                     );
+
+
+                // =========================================
+                // DEBUG INFORMATION
+                // =========================================
+
+                console.log(
+                    "RTB final URL:",
+                    response.url
+                );
+
+                console.log(
+                    "RTB status:",
+                    response.status
+                );
+
+                console.log(
+                    "RTB content-type:",
+                    response.headers.get("content-type")
+                );
 
 
                 if (!response.ok) {
@@ -702,20 +704,27 @@ async function loadRTB() {
 
                 console.log(
                     "RTB HTML length:",
-                    query,
                     html.length
                 );
 
 
-                // =================================
-                // FIND ALL COURSE URLs
-                // =================================
+                console.log(
+                    "RTB preview:",
+                    html.substring(0, 1000)
+                );
+
+
+                // =========================================
+                // FIND COURSE URLS
+                // =========================================
 
                 const hrefRegex =
                     /href\s*=\s*["']([^"']*course\/view\.php\?id=\d+[^"']*)["']/gi;
 
 
                 let match;
+
+                let foundForQuery = 0;
 
 
                 while (
@@ -724,15 +733,9 @@ async function loadRTB() {
                 ) {
 
                     let href =
-                        match[1];
+                        decodeHTML(match[1]);
 
 
-                    // Decode HTML entities
-                    href =
-                        decodeHTML(href);
-
-
-                    // Convert relative URL
                     if (
                         href.startsWith("/")
                     ) {
@@ -752,7 +755,6 @@ async function loadRTB() {
                     }
 
 
-                    // Extract Moodle course ID
                     const idMatch =
                         href.match(
                             /course\/view\.php\?id=(\d+)/i
@@ -770,16 +772,9 @@ async function loadRTB() {
                         idMatch[1];
 
 
-                    // =================================
-                    // FIND TITLE NEAR THE LINK
-                    // =================================
-
-                    /*
-                     * Get a chunk around the link.
-                     *
-                     * Moodle puts the course title
-                     * close to its course URL.
-                     */
+                    // =========================================
+                    // FIND THE COURSE CARD / LINK
+                    // =========================================
 
                     const position =
                         match.index;
@@ -788,14 +783,14 @@ async function loadRTB() {
                     const chunkStart =
                         Math.max(
                             0,
-                            position - 1500
+                            position - 2000
                         );
 
 
                     const chunkEnd =
                         Math.min(
                             html.length,
-                            position + 2500
+                            position + 3000
                         );
 
 
@@ -809,9 +804,9 @@ async function loadRTB() {
                     let title = "";
 
 
-                    // ---------------------------------
-                    // Try aria-label
-                    // ---------------------------------
+                    // -----------------------------------------
+                    // 1. aria-label
+                    // -----------------------------------------
 
                     const ariaMatch =
                         chunk.match(
@@ -831,9 +826,9 @@ async function loadRTB() {
                     }
 
 
-                    // ---------------------------------
-                    // Try title=""
-                    // ---------------------------------
+                    // -----------------------------------------
+                    // 2. title attribute
+                    // -----------------------------------------
 
                     if (!title) {
 
@@ -852,89 +847,48 @@ async function loadRTB() {
                                     titleAttr[1]
                                 );
 
-                        }
+                            }
 
                     }
 
 
-                    // ---------------------------------
-                    // Extract anchor containing URL
-                    // ---------------------------------
+                    // -----------------------------------------
+                    // 3. Find exact course anchor
+                    // -----------------------------------------
 
                     if (!title) {
 
                         const anchorRegex =
-                            new RegExp(
-                                "<a[^>]+href=[\"']" +
-                                href
-                                    .replace(
-                                        /[.*+?^${}()|[\]\\]/g,
-                                        "\\$&"
-                                    ) +
-                                "[\"'][^>]*>([\\\\s\\\\S]*?)<\\\\/a>",
-                                "i"
-                            );
+                            /<a\b[^>]*href=["'][^"']*course\/view\.php\?id=\d+[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
 
 
-                        const anchorMatch =
-                            chunk.match(
+                        const anchors =
+                            chunk.matchAll(
                                 anchorRegex
                             );
 
 
-                        if (
-                            anchorMatch
+                        for (
+                            const anchor
+                            of anchors
                         ) {
 
-                            title =
+                            const text =
                                 cleanText(
-                                    anchorMatch[1]
+                                    anchor[1]
                                 );
 
-                        }
 
-                    }
-
-
-                    // ---------------------------------
-                    // Another generic anchor fallback
-                    // ---------------------------------
-
-                    if (!title) {
-
-                        const genericAnchor =
-                            chunk.match(
-                                /<a[^>]*>([\s\S]*?)<\/a>/gi
-                            );
-
-
-                        if (
-                            genericAnchor
-                        ) {
-
-                            for (
-                                const anchor
-                                of genericAnchor
+                            if (
+                                text.length >= 3 &&
+                                text.length <= 250 &&
+                                !/^(home|courses|search|login|log in|dashboard)$/i.test(text)
                             ) {
 
-                                const text =
-                                    cleanText(
-                                        anchor
-                                    );
+                                title =
+                                    text;
 
-
-                                if (
-                                    text.length >= 4 &&
-                                    text.length <= 180 &&
-                                    !/^(home|courses|search|login|log in|dashboard)$/i.test(text)
-                                ) {
-
-                                    title =
-                                        text;
-
-                                    break;
-
-                                }
+                                break;
 
                             }
 
@@ -943,14 +897,51 @@ async function loadRTB() {
                     }
 
 
+                    // -----------------------------------------
+                    // 4. Generic course-card text fallback
+                    // -----------------------------------------
+
                     if (!title) {
 
-                        continue;
+                        const textMatches =
+                            chunk.match(
+                                /<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi
+                            ) || [];
+
+
+                        for (
+                            const heading
+                            of textMatches
+                        ) {
+
+                            const text =
+                                cleanText(
+                                    heading
+                                );
+
+
+                            if (
+                                text.length >= 3 &&
+                                text.length <= 250 &&
+                                !/^(home|courses|search|login|log in|dashboard)$/i.test(text)
+                            ) {
+
+                                title =
+                                    text;
+
+                                break;
+
+                            }
+
+                        }
 
                     }
 
 
-                    // Remove obvious navigation text
+                    // =========================================
+                    // VALIDATE TITLE
+                    // =========================================
+
                     title =
                         cleanText(title);
 
@@ -967,7 +958,7 @@ async function loadRTB() {
 
 
                     if (
-                        /^(home|dashboard|courses|course search|search courses|login|log in)$/i.test(title)
+                        /^(home|dashboard|courses|course search|search courses|search|login|log in)$/i.test(title)
                     ) {
 
                         continue;
@@ -987,7 +978,17 @@ async function loadRTB() {
 
                     });
 
+
+                    foundForQuery++;
+
                 }
+
+
+                console.log(
+                    "RTB courses found for",
+                    query + ":",
+                    foundForQuery
+                );
 
             }
             catch (error) {
@@ -1002,6 +1003,10 @@ async function loadRTB() {
 
         }
 
+
+        // =========================================
+        // RAW COURSE COUNT
+        // =========================================
 
         console.log(
             "RTB raw courses:",
@@ -1093,7 +1098,7 @@ async function loadRTB() {
                             "",
 
                         description:
-                            `Training course available through the official RTB E-Learning platform.`,
+                            "Training course available through the official RTB E-Learning platform.",
 
                         requirements:
                             "Check the official RTB E-Learning platform for course access and enrollment requirements.",
@@ -1111,8 +1116,7 @@ async function loadRTB() {
                             true,
 
                         created_at:
-                            new Date()
-                                .toISOString()
+                            new Date().toISOString()
 
                     };
 
@@ -1148,6 +1152,38 @@ async function loadRTB() {
 
 }
 
+### Then deploy
+
+For this test, I deliberately changed the queries to **only `software`**.
+
+That's important because we don't want to wait 8–10 seconds for 12 requests while we're debugging.
+
+After deploying, open:
+
+`https://rwandaopportunityhub.netlify.app/.netlify/functions/training-feed`
+
+Then go to **Netlify → Functions → training-feed → Logs**.
+
+You should now see something like:
+
+```text
+Loading RTB courses...
+RTB search: software
+RTB URL: https://www.elearning.rtb.gov.rw/course/search.php?perpage=all&search=software
+RTB final URL: ...
+RTB status: ...
+RTB content-type: ...
+RTB HTML length: ...
+RTB preview: ...
+RTB courses found for software: ...
+RTB raw courses: ...
+RTB unique courses: ...
+RTB trainings found: ...
+```
+
+**Send me those lines**, especially `RTB status`, `RTB HTML length`, `RTB preview`, and `RTB courses found for software`.
+
+Then we'll know exactly why RTB is returning `0`.
 
 // =========================================
 // NETLIFY FUNCTION
