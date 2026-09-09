@@ -588,7 +588,25 @@ async function loadRISA() {
 
 }
 
+function removeDuplicates(trainings) {
+  const seen = new Set();
 
+  return trainings.filter(training => {
+    const key = (
+      training.link ||
+      training.id ||
+      training.title ||
+      ""
+    ).toLowerCase().trim();
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
 // =========================================
 // RTB
 // =========================================
