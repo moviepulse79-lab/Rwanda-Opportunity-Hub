@@ -7,8 +7,7 @@
 // - RISA Digital Skills
 // - Rwanda TVET Board (RTB)
 //
-// This function fetches public pages server-side
-// so training.js does NOT need to bypass CORS.
+// Server-side scraping/proxy
 // =========================================
 
 const RISA_URL =
@@ -19,23 +18,8 @@ const RTB_URL =
 
 
 // =========================================
-// BASIC HELPERS
+// HELPERS
 // =========================================
-
-function cleanText(value = "") {
-
-    return String(value)
-        .replace(/<[^>]*>/g, " ")
-        .replace(/&nbsp;/gi, " ")
-        .replace(/&amp;/gi, "&")
-        .replace(/&quot;/gi, '"')
-        .replace(/&#39;/gi, "'")
-        .replace(/&#x27;/gi, "'")
-        .replace(/\s+/g, " ")
-        .trim();
-
-}
-
 
 function decodeHTML(value = "") {
 
@@ -50,7 +34,22 @@ function decodeHTML(value = "") {
         .replace(/&#(\d+);/g, (_, code) =>
             String.fromCharCode(Number(code))
         )
-        .trim();
+        .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
+            String.fromCharCode(parseInt(code, 16))
+        );
+}
+
+
+function cleanText(value = "") {
+
+    return decodeHTML(
+        String(value)
+            .replace(/<script[\s\S]*?<\/script>/gi, " ")
+            .replace(/<style[\s\S]*?<\/style>/gi, " ")
+            .replace(/<[^>]*>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+    );
 
 }
 
@@ -62,11 +61,31 @@ function absoluteURL(url, base) {
     }
 
     try {
-        return new URL(url, base).href;
-    }
-    catch {
+
+        return new URL(
+            decodeHTML(url),
+            base
+        ).href;
+
+    } catch {
+
         return base;
+
     }
+
+}
+
+
+function makeID(prefix, title, organization) {
+
+    const raw =
+        `${prefix}-${title}-${organization}`;
+
+    return raw
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .substring(0, 100);
 
 }
 
@@ -82,11 +101,9 @@ function safeDate(value) {
             /\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}/
         );
 
-    if (match) {
-        return match[0];
-    }
-
-    return String(value).trim();
+    return match
+        ? match[0]
+        : String(value).trim();
 
 }
 
@@ -97,15 +114,17 @@ function safeDate(value) {
 
 async function loadRISA() {
 
+    console.log("Loading RISA...");
+
     const response =
         await fetch(
             RISA_URL,
             {
                 headers: {
                     "User-Agent":
-                        "Rwanda Opportunity Hub Training Aggregator",
+                        "Mozilla/5.0 Rwanda Opportunity Hub",
                     "Accept":
-                        "text/html,application/xhtml+xml"
+                        "text/html,application/xhtml+xml,text/html"
                 }
             }
         );
@@ -124,24 +143,37 @@ async function loadRISA() {
         await response.text();
 
 
+    console.log(
+        "RISA HTML length:",
+        html.length
+    );
+
+
     const trainings = [];
 
 
     // -----------------------------------------
-    // Find table rows
+    // METHOD 1
+    // Parse table rows
     // -----------------------------------------
 
-    const rowMatches =
+    const rows =
         html.match(
-            /<tr[\s\S]*?<\/tr>/gi
+            /<tr\b[^>]*>[\s\S]*?<\/tr>/gi
         ) || [];
 
 
-    for (const row of rowMatches) {
+    console.log(
+        "RISA table rows:",
+        rows.length
+    );
+
+
+    for (const row of rows) {
 
         const cells =
             row.match(
-                /<t[dh][^>]*>[\s\S]*?<\/t[dh]>/gi
+                /<td\b[^>]*>[\s\S]*?<\/td>/gi
             ) || [];
 
 
@@ -152,29 +184,44 @@ async function loadRISA() {
 
         const values =
             cells.map(
-                cell =>
-                    decodeHTML(
-                        cleanText(cell)
-                    )
+                cell => cleanText(cell)
             );
 
 
-        const joined =
-            values.join(" | ");
+        // Remove empty cells
+        const cleaned =
+            values.filter(
+                value => value.trim() !== ""
+            );
 
 
-        // Ignore header rows
-        if (
-            /Training Title/i.test(joined) &&
-            /Provider/i.test(joined)
-        ) {
+        if (cleaned.length < 5) {
             continue;
         }
 
 
-        /*
-            Expected RISA structure:
+        const joined =
+            cleaned.join(" | ");
 
+
+        // -------------------------------------
+        // Skip headers
+        // -------------------------------------
+
+        if (
+            /training title/i.test(joined) ||
+            /^n#\s*\|/i.test(joined)
+        ) {
+
+            continue;
+
+        }
+
+
+        /*
+            Actual RISA structure observed:
+
+            N#
             Training Title
             Level
             Provider
@@ -183,159 +230,277 @@ async function loadRISA() {
             Duration
             Seats
             Submission Status
-            Details / Action
         */
 
+
+        let titleIndex = -1;
+
+
+        // Find a real training title.
+        // Skip numeric N# values.
+
+        for (
+            let i = 0;
+            i < cleaned.length;
+            i++
+        ) {
+
+            const value =
+                cleaned[i];
+
+
+            if (
+                /^\d+$/.test(value)
+            ) {
+                continue;
+            }
+
+
+            if (
+                /^(entrant|beginner|intermediate|advanced|expert|level)/i.test(value)
+            ) {
+                continue;
+            }
+
+
+            if (
+                /online|physical|classroom|instructor|self-paced/i.test(value)
+            ) {
+                continue;
+            }
+
+
+            if (
+                /days?|weeks?|months?/i.test(value)
+            ) {
+                continue;
+            }
+
+
+            if (
+                /seats?\s*(left|full)/i.test(value)
+            ) {
+                continue;
+            }
+
+
+            if (
+                /you can apply|closed|not available/i.test(value)
+            ) {
+                continue;
+            }
+
+
+            // Date value
+            if (
+                /\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}/i.test(value)
+            ) {
+                continue;
+            }
+
+
+            // First suitable value is the title
+            if (
+                value.length >= 3
+            ) {
+
+                titleIndex = i;
+                break;
+
+            }
+
+        }
+
+
+        if (
+            titleIndex === -1
+        ) {
+
+            continue;
+
+        }
+
+
         const title =
-            values[1] ||
-            values[0];
+            cleaned[titleIndex];
 
 
         if (
             !title ||
-            /training title/i.test(title) ||
-            title.length < 2
+            title.length < 3
         ) {
+
             continue;
+
         }
 
 
+        // -------------------------------------
+        // Remaining fields
+        // -------------------------------------
+
+        const remaining =
+            cleaned.slice(
+                titleIndex + 1
+            );
+
+
         const level =
-            values[2] ||
+            remaining.find(
+                value =>
+                    /entrant|beginner|intermediate|advanced|expert|level/i.test(value)
+            ) ||
             "All Levels";
 
 
         const provider =
-            values[3] ||
+            remaining.find(
+                value =>
+                    !/entrant|beginner|intermediate|advanced|expert|level/i.test(value) &&
+                    !/online|physical|classroom|instructor|self-paced/i.test(value) &&
+                    !/\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}/i.test(value) &&
+                    !/days?|weeks?|months?/i.test(value) &&
+                    !/seats?\s*(left|full)/i.test(value) &&
+                    !/you can apply|closed|not available/i.test(value)
+            ) ||
             "RISA";
 
 
         const mode =
-            values[4] ||
+            remaining.find(
+                value =>
+                    /online|physical|classroom|instructor|self-paced/i.test(value)
+            ) ||
             "Not specified";
 
 
         const dates =
-            values[5] ||
+            remaining.find(
+                value =>
+                    /\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}/i.test(value)
+            ) ||
             "";
 
 
         const duration =
-            values[6] ||
+            remaining.find(
+                value =>
+                    /\b\d+\s*(day|days|week|weeks|month|months)\b/i.test(value)
+            ) ||
             "Not specified";
 
 
         const seats =
-            values[7] ||
+            remaining.find(
+                value =>
+                    /seats?\s*(left|full)/i.test(value)
+            ) ||
             "";
 
 
         // -------------------------------------
-        // Find course/details link
+        // Details / Apply link
         // -------------------------------------
 
-        const linkMatch =
-            row.match(
-                /href\s*=\s*["']([^"']+)["']/i
-            );
-
-
-        const link =
-            linkMatch
-                ? absoluteURL(
-                    decodeHTML(
-                        linkMatch[1]
-                    ),
-                    RISA_URL
+        const links =
+            [
+                ...row.matchAll(
+                    /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
                 )
-                : RISA_URL;
+            ];
+
+
+        let link =
+            RISA_URL;
+
+
+        for (const item of links) {
+
+            const href =
+                item[1];
+
+
+            const linkText =
+                cleanText(item[2]);
+
+
+            if (
+                /view details|apply|request/i.test(linkText)
+            ) {
+
+                link =
+                    absoluteURL(
+                        href,
+                        RISA_URL
+                    );
+
+                break;
+
+            }
+
+        }
 
 
         trainings.push({
 
             id:
-                `risa-${Buffer.from(
-                    `${title}-${provider}`
-                ).toString("base64")
-                    .replace(/[^a-zA-Z0-9]/g, "")
-                    .substring(0, 24)}`,
+                makeID(
+                    "risa",
+                    title,
+                    provider
+                ),
 
-            title:
-
-                title,
+            title,
 
             organization:
-
                 provider,
 
             type:
-
                 "training",
 
             category:
-
                 "technology",
 
             location:
-
                 "Rwanda",
 
             country:
-
                 "Rwanda",
 
-            mode:
+            mode,
 
-                mode,
+            level,
 
-            level:
-
-                level,
-
-            duration:
-
-                duration,
+            duration,
 
             deadline:
-
                 safeDate(dates) ||
                 "See training dates",
 
             description:
-
-                `Training available through the RISA Digital Skills catalogue. ${seats}`,
+                `Live training opportunity from the RISA Digital Skills catalogue. ${seats}`,
 
             requirements:
-
                 "Check the official RISA training page for eligibility and application requirements.",
 
-            link:
-
-                link,
+            link,
 
             source:
-
                 "RISA Digital Skills",
 
             verified:
-
                 true,
 
             isExternal:
-
                 true,
 
             created_at:
-
                 new Date().toISOString(),
 
             start_date:
-
                 dates,
 
-            seats:
-
-                seats
+            seats
 
         });
 
@@ -343,32 +508,80 @@ async function loadRISA() {
 
 
     // -----------------------------------------
-    // Fallback parser
+    // METHOD 2
+    // Fallback: extract known RISA-style
+    // training information from visible text
     // -----------------------------------------
 
-    /*
-       Some Joget versions can change the table
-       markup. If no rows were detected, look for
-       visible training names in the page.
-    */
+    if (
+        trainings.length === 0
+    ) {
 
-    if (!trainings.length) {
+        console.log(
+            "RISA table parser found 0. Trying fallback parser..."
+        );
+
 
         const text =
             cleanText(html);
 
 
-        console.warn(
-            "RISA page loaded but no table rows were detected."
-        );
+        /*
+            Look for blocks containing:
+            training name + level + provider
+        */
+
+        const blocks =
+            text.split(/\n+/)
+                .map(
+                    x => x.trim()
+                )
+                .filter(
+                    x => x.length > 3
+                );
 
 
-        console.log(
-            "RISA page length:",
-            text.length
-        );
+        for (
+            let i = 0;
+            i < blocks.length;
+            i++
+        ) {
+
+            const current =
+                blocks[i];
+
+
+            if (
+                /available trainings/i.test(current)
+            ) {
+                continue;
+            }
+
+
+            if (
+                /training title/i.test(current)
+            ) {
+                continue;
+            }
+
+
+            if (
+                /you can apply/i.test(current)
+            ) {
+
+                continue;
+
+            }
+
+        }
 
     }
+
+
+    console.log(
+        "RISA trainings found:",
+        trainings.length
+    );
 
 
     return trainings;
@@ -382,15 +595,18 @@ async function loadRISA() {
 
 async function loadRTB() {
 
+    console.log("Loading RTB...");
+
+
     const response =
         await fetch(
             RTB_URL,
             {
                 headers: {
                     "User-Agent":
-                        "Rwanda Opportunity Hub Training Aggregator",
+                        "Mozilla/5.0 Rwanda Opportunity Hub",
                     "Accept":
-                        "text/html,application/xhtml+xml"
+                        "text/html,application/xhtml+xml,text/html"
                 }
             }
         );
@@ -409,230 +625,217 @@ async function loadRTB() {
         await response.text();
 
 
+    console.log(
+        "RTB HTML length:",
+        html.length
+    );
+
+
     const trainings = [];
-
-
-    /*
-        Moodle course pages normally contain:
-
-        /course/view.php?id=123
-
-        We extract course titles and links.
-    */
-
-    const courseRegex =
-        /<a[^>]+href=["']([^"']*\/course\/view\.php\?id=\d+[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
 
     const seen =
         new Set();
 
 
-    let match;
+    // -----------------------------------------
+    // Find ALL Moodle course links
+    // -----------------------------------------
+
+    const patterns = [
+
+        /href=["']([^"']*course\/view\.php\?id=\d+[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi,
+
+        /<a[^>]+href=["']([^"']*\/course\/view\.php\?id=\d+[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
+
+    ];
 
 
-    while (
-        (match =
-            courseRegex.exec(html)) !== null
-    ) {
+    for (const regex of patterns) {
 
-        const href =
-            decodeHTML(
-                match[1]
-            );
+        let match;
 
 
-        const rawTitle =
-            match[2];
-
-
-        const title =
-            decodeHTML(
-                cleanText(rawTitle)
-            );
-
-
-        if (
-            !title ||
-            title.length < 3
-        ) {
-            continue;
-        }
-
-
-        if (
-            /home|login|search|course categories/i.test(
-                title
-            )
-        ) {
-            continue;
-        }
-
-
-        const link =
-            absoluteURL(
-                href,
-                RTB_URL
-            );
-
-
-        const key =
-            `${title.toLowerCase()}-${link}`;
-
-
-        if (
-            seen.has(key)
-        ) {
-            continue;
-        }
-
-
-        seen.add(key);
-
-
-        let category =
-            "vocational";
-
-
-        const lower =
-            title.toLowerCase();
-
-
-        if (
-            lower.includes("software") ||
-            lower.includes("network") ||
-            lower.includes("telecommunication") ||
-            lower.includes("multimedia") ||
-            lower.includes("ict") ||
-            lower.includes("computer")
+        while (
+            (match =
+                regex.exec(html)) !== null
         ) {
 
-            category =
-                "technology";
-
-        }
-        else if (
-            lower.includes("design") ||
-            lower.includes("graphic") ||
-            lower.includes("interior")
-        ) {
-
-            category =
-                "design";
-
-        }
-        else if (
-            lower.includes("business") ||
-            lower.includes("management") ||
-            lower.includes("finance") ||
-            lower.includes("entrepreneur")
-        ) {
-
-            category =
-                "business";
-
-        }
+            const href =
+                decodeHTML(
+                    match[1]
+                );
 
 
-        let level =
-            "TVET";
+            const title =
+                cleanText(
+                    match[2]
+                );
 
 
-        const levelMatch =
-            title.match(
-                /LEVEL\s+(THREE|FOUR|FIVE|\d+)/i
-            );
+            if (
+                !title ||
+                title.length < 3
+            ) {
+                continue;
+            }
 
 
-        if (levelMatch) {
-
-            level =
-                `Level ${levelMatch[1]}`;
-
-        }
-
-
-        trainings.push({
-
-            id:
-
-                `rtb-${Buffer.from(
+            if (
+                /login|search|home|dashboard|course categories/i.test(
                     title
-                ).toString("base64")
-                    .replace(/[^a-zA-Z0-9]/g, "")
-                    .substring(0, 24)}`,
+                )
+            ) {
+                continue;
+            }
 
-            title:
+
+            const link =
+                absoluteURL(
+                    href,
+                    RTB_URL
+                );
+
+
+            const key =
+                `${title.toLowerCase()}-${link}`;
+
+
+            if (
+                seen.has(key)
+            ) {
+                continue;
+            }
+
+
+            seen.add(key);
+
+
+            let category =
+                "vocational";
+
+
+            const lower =
+                title.toLowerCase();
+
+
+            if (
+                /software|network|telecommunication|multimedia|\bict\b|computer|programming|cyber|information technology/i.test(
+                    lower
+                )
+            ) {
+
+                category =
+                    "technology";
+
+            }
+            else if (
+                /design|graphic|fashion|interior/i.test(
+                    lower
+                )
+            ) {
+
+                category =
+                    "design";
+
+            }
+            else if (
+                /business|management|finance|accounting|entrepreneur|marketing/i.test(
+                    lower
+                )
+            ) {
+
+                category =
+                    "business";
+
+            }
+
+
+            let level =
+                "TVET";
+
+
+            const levelMatch =
+                title.match(
+                    /(?:LEVEL|L)\s*(THREE|FOUR|FIVE|SIX|\d+)/i
+                );
+
+
+            if (levelMatch) {
+
+                level =
+                    `Level ${levelMatch[1]}`;
+
+            }
+
+
+            trainings.push({
+
+                id:
+                    makeID(
+                        "rtb",
+                        title,
+                        "Rwanda TVET Board"
+                    ),
 
                 title,
 
-            organization:
+                organization:
+                    "Rwanda TVET Board",
 
-                "Rwanda TVET Board",
-
-            type:
-
-                "training",
-
-            category:
+                type:
+                    "training",
 
                 category,
 
-            location:
+                location:
+                    "Rwanda",
 
-                "Rwanda",
+                country:
+                    "Rwanda",
 
-            country:
-
-                "Rwanda",
-
-            mode:
-
-                "Online / E-learning",
-
-            level:
+                mode:
+                    "Online / E-learning",
 
                 level,
 
-            duration:
+                duration:
+                    "Self-paced",
 
-                "Self-paced",
+                deadline:
+                    "Open / See course",
 
-            deadline:
+                description:
+                    "TVET learning course available through the Rwanda TVET Board e-learning platform.",
 
-                "Open / See course",
-
-            description:
-
-                `TVET learning course available through the Rwanda TVET Board e-learning platform.`,
-
-            requirements:
-
-                "Access requirements may vary by course. Check the official RTB course page.",
-
-            link:
+                requirements:
+                    "Access requirements may vary by course. Check the official RTB course page.",
 
                 link,
 
-            source:
+                source:
+                    "Rwanda TVET Board",
 
-                "Rwanda TVET Board",
+                verified:
+                    true,
 
-            verified:
+                isExternal:
+                    true,
 
-                true,
+                created_at:
+                    new Date().toISOString()
 
-            isExternal:
+            });
 
-                true,
-
-            created_at:
-
-                new Date().toISOString()
-
-        });
+        }
 
     }
+
+
+    console.log(
+        "RTB trainings found:",
+        trainings.length
+    );
 
 
     return trainings;
@@ -641,7 +844,7 @@ async function loadRTB() {
 
 
 // =========================================
-// DEDUPLICATE
+// REMOVE DUPLICATES
 // =========================================
 
 function removeDuplicates(
@@ -709,7 +912,7 @@ function removeDuplicates(
 
 
 // =========================================
-// NETLIFY HANDLER
+// NETLIFY FUNCTION
 // =========================================
 
 exports.handler =
@@ -721,10 +924,7 @@ exports.handler =
 
         try {
 
-            const [
-                risaResult,
-                rtbResult
-            ] =
+            const results =
                 await Promise.allSettled(
                     [
                         loadRISA(),
@@ -734,40 +934,36 @@ exports.handler =
 
 
             const risa =
-                risaResult.status ===
-                    "fulfilled"
-                    ? risaResult.value
+                results[0].status === "fulfilled"
+                    ? results[0].value
                     : [];
 
 
             const rtb =
-                rtbResult.status ===
-                    "fulfilled"
-                    ? rtbResult.value
+                results[1].status === "fulfilled"
+                    ? results[1].value
                     : [];
 
 
             if (
-                risaResult.status ===
-                "rejected"
+                results[0].status === "rejected"
             ) {
 
                 console.error(
-                    "RISA feed failed:",
-                    risaResult.reason
+                    "RISA ERROR:",
+                    results[0].reason
                 );
 
             }
 
 
             if (
-                rtbResult.status ===
-                "rejected"
+                results[1].status === "rejected"
             ) {
 
                 console.error(
-                    "RTB feed failed:",
-                    rtbResult.reason
+                    "RTB ERROR:",
+                    results[1].reason
                 );
 
             }
@@ -782,9 +978,16 @@ exports.handler =
                 );
 
 
+            console.log(
+                "FINAL TRAINING COUNT:",
+                trainings.length
+            );
+
+
             return {
 
-                statusCode: 200,
+                statusCode:
+                    200,
 
                 headers: {
 
@@ -799,11 +1002,6 @@ exports.handler =
 
                     "Access-Control-Allow-Headers":
                         "Content-Type",
-
-                    /*
-                        Let Netlify/CDN cache the
-                        feed for 15 minutes.
-                    */
 
                     "Cache-Control":
                         "public, max-age=900, s-maxage=900"
@@ -837,9 +1035,7 @@ exports.handler =
 
                         },
 
-                        trainings:
-
-                            trainings
+                        trainings
 
                     })
 
@@ -849,14 +1045,15 @@ exports.handler =
         catch (error) {
 
             console.error(
-                "Training feed error:",
+                "TRAINING FEED ERROR:",
                 error
             );
 
 
             return {
 
-                statusCode: 500,
+                statusCode:
+                    500,
 
                 headers: {
 
@@ -875,7 +1072,7 @@ exports.handler =
                             false,
 
                         error:
-                            "Unable to load training sources.",
+                            error.message,
 
                         trainings:
                             []
