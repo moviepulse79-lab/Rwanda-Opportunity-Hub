@@ -357,3 +357,26 @@
     }
 
 }
+.load-more-training-btn {
+    display: block;
+    margin: 35px auto 50px;
+    padding: 13px 28px;
+    border: none;
+    border-radius: 8px;
+    background: #087f5b;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.load-more-training-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.load-more-training-btn span {
+    opacity: 0.8;
+    font-weight: 400;
+}
