@@ -1,11 +1,16 @@
 // =========================================
 // RWANDA OPPORTUNITY HUB
-// TRAINING — SUPABASE + EXTERNAL SOURCES
+// TRAINING PAGE
+//
+// Sources:
+// 1. Supabase
+// 2. RISA Digital Skills
+// 3. Rwanda TVET Board
 // =========================================
 
 
 // =========================================
-// DOM ELEMENTS
+// DOM
 // =========================================
 
 const trainingsGrid =
@@ -18,7 +23,9 @@ const trainingCount =
     document.getElementById("trainingCount");
 
 const trainingFilters =
-    document.querySelectorAll(".training-filter");
+    document.querySelectorAll(
+        ".training-filter"
+    );
 
 
 // =========================================
@@ -27,65 +34,8 @@ const trainingFilters =
 
 let trainings = [];
 
-let currentTrainingFilter = "all";
-
-
-// =========================================
-// EXTERNAL TRAINING SOURCES
-// =========================================
-//
-// IMPORTANT:
-// Only put a URL here when the source provides
-// a real browser-accessible JSON feed/API.
-//
-// Do NOT put private API keys in this file.
-//
-// Example:
-// {
-//     name: "Example Training API",
-//     url: "https://example.com/api/trainings"
-// }
-//
-// The list is intentionally empty until we
-// confirm a real public API/feed.
-// =========================================
-
-const externalTrainingFeeds = [
-
-    // Example:
-    //
-    // {
-    //     name: "Training Source",
-    //     url: "https://example.com/public/trainings.json"
-    // }
-
-];
-
-
-// =========================================
-// SOURCE INFORMATION
-// =========================================
-//
-// These official pages are useful sources,
-// but they are NOT treated as fake APIs.
-// They can be linked from training records.
-// =========================================
-
-const trainingSources = {
-
-    risa: {
-        name: "RISA Digital Skills",
-        url:
-            "https://dev.services.gov.rw/jw/web/userview/DigitalSkillsApp_V2/DigitalSkillsApp_V2/_/courses_to_request"
-    },
-
-    rtb: {
-        name: "Rwanda TVET Board",
-        url:
-            "https://www.elearning.rtb.gov.rw/"
-    }
-
-};
+let currentTrainingFilter =
+    "all";
 
 
 // =========================================
@@ -94,7 +44,10 @@ const trainingSources = {
 
 function cleanText(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
 
@@ -109,7 +62,10 @@ function normalize(value) {
 
     return cleanText(value)
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, " ")
+        .replace(
+            /[^a-z0-9]+/g,
+            " "
+        )
         .trim();
 
 }
@@ -117,365 +73,342 @@ function normalize(value) {
 
 function escapeHTML(value) {
 
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
 
 
-function formatDate(date) {
+// =========================================
+// SUPABASE
+// =========================================
 
-    if (!date) {
-        return "No deadline";
-    }
+async function loadSupabaseTrainings() {
 
-    const parsedDate = new Date(date);
+    try {
 
-    if (Number.isNaN(parsedDate.getTime())) {
-        return escapeHTML(date);
-    }
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from(
+                    "opportunities"
+                )
+                .select("*")
+                .eq(
+                    "type",
+                    "training"
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending:
+                            false
+                    }
+                );
 
-    return parsedDate.toLocaleDateString(
-        "en-GB",
-        {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
+
+        if (error) {
+
+            console.error(
+                "Supabase trainings error:",
+                error
+            );
+
+            return [];
+
         }
-    );
-
-}
 
 
-// =========================================
-// NORMALIZE SUPABASE TRAINING
-// =========================================
+        return (
+            data || []
+        ).map(
+            training => ({
 
-function normalizeSupabaseTraining(training) {
+                id:
+                    training.id,
 
-    return {
+                title:
+                    training.title ||
+                    "Untitled Training",
 
-        id:
-            training.id,
+                organization:
+                    training.organization ||
+                    "Organization",
 
-        title:
-            training.title ||
-            "Untitled Training",
+                type:
+                    "training",
 
-        organization:
-            training.organization ||
-            "Organization",
+                category:
+                    training.category ||
+                    "professional",
 
-        type:
-            "training",
+                location:
+                    training.location ||
+                    "Rwanda",
 
-        category:
-            training.category ||
-            "professional",
+                country:
+                    training.country ||
+                    "Rwanda",
 
-        location:
-            training.location ||
-            "Rwanda",
+                mode:
+                    training.mode ||
+                    "Not specified",
 
-        country:
-            training.country ||
-            "Rwanda",
+                level:
+                    training.level ||
+                    "All Levels",
 
-        mode:
-            training.mode ||
-            "Not specified",
+                duration:
+                    training.duration ||
+                    "Not specified",
 
-        level:
-            training.level ||
-            "All Levels",
+                deadline:
+                    training.deadline ||
+                    "No deadline",
 
-        duration:
-            training.duration ||
-            "Not specified",
+                description:
+                    training.description ||
+                    "",
 
-        deadline:
-            training.deadline ||
-            "No deadline",
+                requirements:
+                    training.requirements ||
+                    "",
 
-        description:
-            training.description ||
-            "",
+                link:
+                    training.link ||
+                    `opportunity.html?id=${encodeURIComponent(
+                        training.id
+                    )}&type=training`,
 
-        requirements:
-            training.requirements ||
-            "",
+                source:
+                    training.source ||
+                    "Rwanda Opportunity Hub",
 
-        link:
-            training.link ||
-            `opportunity.html?id=${training.id}&type=training`,
+                verified:
+                    true,
 
-        source:
-            training.source ||
-            "Rwanda Opportunity Hub",
+                isExternal:
+                    false,
 
-        verified:
-            true,
+                created_at:
+                    training.created_at ||
+                    null
 
-        isExternal:
-            false,
+            })
+        );
 
-        created_at:
-            training.created_at ||
-            null
+    }
+    catch (error) {
 
-    };
-
-}
-
-
-// =========================================
-// NORMALIZE EXTERNAL TRAINING
-// =========================================
-//
-// This allows future public APIs to plug into
-// ROH without changing the card system.
-// =========================================
-
-function normalizeExternalTraining(
-    training,
-    sourceName
-) {
-
-    return {
-
-        id:
-            training.id ||
-            `external-${Date.now()}-${Math.random()
-                .toString(36)
-                .substring(2, 9)}`,
-
-        title:
-            training.title ||
-            training.name ||
-            "Untitled Training",
-
-        organization:
-            training.organization ||
-            training.provider ||
-            training.company ||
-            sourceName ||
-            "Training Provider",
-
-        type:
-            "training",
-
-        category:
-            (
-                training.category ||
-                training.field ||
-                training.topic ||
-                "professional"
-            ).toLowerCase(),
-
-        location:
-            training.location ||
-            "Rwanda",
-
-        country:
-            training.country ||
-            "Rwanda",
-
-        mode:
-            training.mode ||
-            training.delivery_mode ||
-            "Not specified",
-
-        level:
-            training.level ||
-            "All Levels",
-
-        duration:
-            training.duration ||
-            "Not specified",
-
-        deadline:
-            training.deadline ||
-            training.application_deadline ||
-            "No deadline",
-
-        description:
-            training.description ||
-            "",
-
-        requirements:
-            training.requirements ||
-            "",
-
-        link:
-            training.link ||
-            training.url ||
-            "#",
-
-        source:
-            training.source ||
-            sourceName ||
-            "External Source",
-
-        verified:
-            training.verified !== false,
-
-        isExternal:
-            true,
-
-        created_at:
-            training.created_at ||
-            null
-
-    };
-
-}
-
-
-// =========================================
-// LOAD EXTERNAL JSON FEEDS
-// =========================================
-
-async function loadExternalTrainingFeeds() {
-
-    if (!externalTrainingFeeds.length) {
-
-        console.log(
-            "No public training JSON feeds configured."
+        console.error(
+            "Supabase training request failed:",
+            error
         );
 
         return [];
 
     }
 
-
-    const results = [];
-
-
-    for (
-        const feed
-        of externalTrainingFeeds
-    ) {
-
-        try {
-
-            const response =
-                await fetch(
-                    feed.url,
-                    {
-                        method: "GET",
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        }
-                    }
-                );
+}
 
 
-            if (!response.ok) {
+// =========================================
+// LIVE EXTERNAL TRAININGS
+// =========================================
 
-                throw new Error(
-                    `HTTP ${response.status}`
-                );
+async function loadLiveTrainings() {
 
-            }
+    try {
 
-
-            const result =
-                await response.json();
-
-
-            /*
-                Support several common API shapes:
-
-                [
-                    {...},
-                    {...}
-                ]
-
+        const response =
+            await fetch(
+                "/.netlify/functions/training-feed",
                 {
-                    data: [...]
+                    method:
+                        "GET",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    },
+
+                    cache:
+                        "no-store"
                 }
-
-                {
-                    results: [...]
-                }
-
-                {
-                    opportunities: [...]
-                }
-
-                {
-                    trainings: [...]
-                }
-            */
-
-            const records =
-
-                Array.isArray(result)
-
-                    ? result
-
-                    : Array.isArray(result.data)
-
-                        ? result.data
-
-                        : Array.isArray(result.results)
-
-                            ? result.results
-
-                            : Array.isArray(
-                                result.opportunities
-                            )
-
-                                ? result.opportunities
-
-                                : Array.isArray(
-                                    result.trainings
-                                )
-
-                                    ? result.trainings
-
-                                    : [];
-
-
-            const normalized =
-                records.map(
-                    training =>
-                        normalizeExternalTraining(
-                            training,
-                            feed.name
-                        )
-                );
-
-
-            results.push(
-                ...normalized
             );
 
 
-            console.log(
-                `${feed.name}: ${normalized.length} trainings`
+        if (!response.ok) {
+
+            throw new Error(
+                `Training feed HTTP ${response.status}`
             );
 
         }
 
-        catch (error) {
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "LIVE TRAINING FEED:",
+            result
+        );
+
+
+        if (
+            !result.success
+        ) {
 
             console.warn(
-                `Training source failed: ${feed.name}`,
-                error
+                "Training feed returned unsuccessful response."
             );
+
+            return [];
 
         }
 
+
+        const records =
+            Array.isArray(
+                result.trainings
+            )
+                ? result.trainings
+                : [];
+
+
+        console.log(
+            "RISA TRAININGS:",
+            result.sources?.risa ||
+            0
+        );
+
+
+        console.log(
+            "RTB TRAININGS:",
+            result.sources?.rtb ||
+            0
+        );
+
+
+        return records.map(
+            training => ({
+
+                id:
+                    training.id,
+
+                title:
+                    training.title ||
+                    "Untitled Training",
+
+                organization:
+                    training.organization ||
+                    "Training Provider",
+
+                type:
+                    "training",
+
+                category:
+                    training.category ||
+                    "professional",
+
+                location:
+                    training.location ||
+                    "Rwanda",
+
+                country:
+                    training.country ||
+                    "Rwanda",
+
+                mode:
+                    training.mode ||
+                    "Not specified",
+
+                level:
+                    training.level ||
+                    "All Levels",
+
+                duration:
+                    training.duration ||
+                    "Not specified",
+
+                deadline:
+                    training.deadline ||
+                    "See official source",
+
+                description:
+                    training.description ||
+                    "",
+
+                requirements:
+                    training.requirements ||
+                    "",
+
+                link:
+                    training.link ||
+                    "#",
+
+                source:
+                    training.source ||
+                    "External Source",
+
+                verified:
+                    training.verified !==
+                    false,
+
+                isExternal:
+                    true,
+
+                created_at:
+                    training.created_at ||
+                    null,
+
+                seats:
+                    training.seats ||
+                    "",
+
+                start_date:
+                    training.start_date ||
+                    ""
+
+            })
+        );
+
     }
+    catch (error) {
 
+        console.error(
+            "Live training feed failed:",
+            error
+        );
 
-    return results;
+        return [];
+
+    }
 
 }
 
@@ -488,9 +421,11 @@ function removeDuplicateTrainings(
     trainingList
 ) {
 
-    const unique = [];
+    const unique =
+        [];
 
-    const seen = new Set();
+    const seen =
+        new Set();
 
 
     trainingList.forEach(
@@ -511,11 +446,17 @@ function removeDuplicateTrainings(
                 `${title}-${organization}`;
 
 
-            if (!seen.has(key)) {
+            if (
+                !seen.has(key)
+            ) {
 
-                seen.add(key);
+                seen.add(
+                    key
+                );
 
-                unique.push(training);
+                unique.push(
+                    training
+                );
 
             }
 
@@ -529,242 +470,39 @@ function removeDuplicateTrainings(
 
 
 // =========================================
-// LOAD SUPABASE TRAININGS
-// =========================================
-
-async function loadSupabaseTrainings() {
-
-    try {
-
-        const {
-            data,
-            error
-        } = await supabaseClient
-
-            .from("opportunities")
-
-            .select("*")
-
-            .eq(
-                "type",
-                "training"
-            )
-
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
-
-
-        if (error) {
-
-            console.error(
-                "Supabase trainings error:",
-                error
-            );
-
-            return [];
-
-        }
-
-
-        return (
-            data || []
-        ).map(
-            normalizeSupabaseTraining
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Supabase training request failed:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
-
-
-// =========================================
-// LOAD ALL TRAININGS
-// =========================================
-
-async function loadTrainings() {
-
-    if (!trainingsGrid) {
-        return;
-    }
-
-
-    trainingsGrid.innerHTML = `
-
-        <div class="no-results">
-
-            <h3>
-                Loading training programs...
-            </h3>
-
-            <p>
-                Finding the latest opportunities.
-            </p>
-
-        </div>
-
-    `;
-
-
-    try {
-
-        // -------------------------------------
-        // SUPABASE
-        // -------------------------------------
-
-        const supabaseTrainings =
-            await loadSupabaseTrainings();
-
-
-        // -------------------------------------
-        // EXTERNAL PUBLIC FEEDS
-        // -------------------------------------
-
-        const externalTrainings =
-            await loadExternalTrainingFeeds();
-
-
-        // -------------------------------------
-        // COMBINE
-        // -------------------------------------
-
-        trainings = [
-
-            ...externalTrainings,
-
-            ...supabaseTrainings
-
-        ];
-
-
-        // -------------------------------------
-        // REMOVE DUPLICATES
-        // -------------------------------------
-
-        trainings =
-            removeDuplicateTrainings(
-                trainings
-            );
-
-
-        // -------------------------------------
-        // SORT
-        // -------------------------------------
-        //
-        // Newest records first when a date exists.
-        // External records without dates remain.
-        // -------------------------------------
-
-        trainings.sort(
-            (a, b) => {
-
-                const dateA =
-                    new Date(
-                        a.created_at || 0
-                    ).getTime();
-
-
-                const dateB =
-                    new Date(
-                        b.created_at || 0
-                    ).getTime();
-
-
-                return dateB - dateA;
-
-            }
-        );
-
-
-        console.log(
-            "TOTAL ROH TRAININGS:",
-            trainings.length
-        );
-
-
-        console.log(
-            "SUPABASE TRAININGS:",
-            supabaseTrainings.length
-        );
-
-
-        console.log(
-            "EXTERNAL TRAININGS:",
-            externalTrainings.length
-        );
-
-
-        displayTrainings(
-            trainings
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Failed to load trainings:",
-            error
-        );
-
-
-        trainingsGrid.innerHTML = `
-
-            <div class="no-results">
-
-                <h3>
-                    Unable to load training programs
-                </h3>
-
-                <p>
-                    Please try again later.
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-}
-
-
-// =========================================
-// GET TRAINING CATEGORY
+// CATEGORY
 // =========================================
 
 function getTrainingCategory(
     training
 ) {
 
-    const category =
+    const text =
         normalize(
-            training.category
+            [
+                training.category,
+                training.title,
+                training.description,
+                training.organization
+            ].join(" ")
         );
 
 
+    // Technology
     if (
-        category.includes("technology") ||
-        category.includes("tech") ||
-        category.includes("ict") ||
-        category.includes("computer") ||
-        category.includes("programming") ||
-        category.includes("software") ||
-        category.includes("digital")
+        text.includes("technology") ||
+        text.includes("technology") ||
+        text.includes("ict") ||
+        text.includes("computer") ||
+        text.includes("programming") ||
+        text.includes("software") ||
+        text.includes("digital") ||
+        text.includes("network") ||
+        text.includes("telecommunication") ||
+        text.includes("cybersecurity") ||
+        text.includes("data science") ||
+        text.includes("artificial intelligence") ||
+        text.includes("machine learning")
     ) {
 
         return "technology";
@@ -772,11 +510,14 @@ function getTrainingCategory(
     }
 
 
+    // Business
     if (
-        category.includes("business") ||
-        category.includes("entrepreneur") ||
-        category.includes("management") ||
-        category.includes("finance")
+        text.includes("business") ||
+        text.includes("entrepreneur") ||
+        text.includes("management") ||
+        text.includes("finance") ||
+        text.includes("accounting") ||
+        text.includes("marketing")
     ) {
 
         return "business";
@@ -784,11 +525,14 @@ function getTrainingCategory(
     }
 
 
+    // Design
     if (
-        category.includes("design") ||
-        category.includes("creative") ||
-        category.includes("ui") ||
-        category.includes("ux")
+        text.includes("design") ||
+        text.includes("creative") ||
+        text.includes("graphic") ||
+        text.includes("ui") ||
+        text.includes("ux") ||
+        text.includes("multimedia")
     ) {
 
         return "design";
@@ -796,14 +540,22 @@ function getTrainingCategory(
     }
 
 
+    // Vocational
     if (
-        category.includes("vocational") ||
-        category.includes("tvet") ||
-        category.includes("technical") ||
-        category.includes("agriculture") ||
-        category.includes("construction") ||
-        category.includes("hospitality") ||
-        category.includes("manufacturing")
+        text.includes("vocational") ||
+        text.includes("tvet") ||
+        text.includes("technical") ||
+        text.includes("agriculture") ||
+        text.includes("construction") ||
+        text.includes("hospitality") ||
+        text.includes("tourism") ||
+        text.includes("manufacturing") ||
+        text.includes("welding") ||
+        text.includes("masonry") ||
+        text.includes("plumbing") ||
+        text.includes("food processing") ||
+        text.includes("food and beverage") ||
+        text.includes("solar energy")
     ) {
 
         return "vocational";
@@ -817,7 +569,7 @@ function getTrainingCategory(
 
 
 // =========================================
-// DISPLAY TRAININGS
+// DISPLAY
 // =========================================
 
 function displayTrainings(
@@ -875,25 +627,25 @@ function displayTrainings(
                     training.isExternal;
 
 
-                let detailsLink;
+                const detailsLink =
+                    isExternal
+                        ? training.link ||
+                          "#"
 
-
-                if (isExternal) {
-
-                    detailsLink =
-                        training.link ||
-                        "#";
-
-                }
-
-                else {
-
-                    detailsLink =
-                        `opportunity.html?id=${encodeURIComponent(
+                        : `opportunity.html?id=${encodeURIComponent(
                             training.id
-                        )}&type=training`;
+                          )}&type=training`;
 
-                }
+
+                const actionText =
+                    isExternal
+                        ? "View / Apply →"
+                        : "View Details →";
+
+
+                const sourceText =
+                    training.source ||
+                    "Rwanda Opportunity Hub";
 
 
                 return `
@@ -905,109 +657,131 @@ function displayTrainings(
                         )}"
                     >
 
+                        <div
+                            class="training-card-top"
+                        >
 
-                        <div class="training-card-top">
-
-                            <div class="training-icon">
+                            <div
+                                class="training-icon"
+                            >
                                 📚
                             </div>
 
-
-                            <span class="verified-badge">
-
+                            <span
+                                class="verified-badge"
+                            >
                                 ✓ Verified
-
                             </span>
 
                         </div>
 
 
-                        <span class="training-type">
-
+                        <span
+                            class="training-type"
+                        >
                             ${escapeHTML(
-                                training.category ||
-                                "Training"
+                                category
                             )}
-
                         </span>
 
 
                         <h3>
-
                             ${escapeHTML(
-                                training.title ||
-                                "Untitled Training"
+                                training.title
                             )}
-
                         </h3>
 
 
                         <p
                             class="training-organization"
                         >
-
                             ${escapeHTML(
-                                training.organization ||
-                                "Organization"
+                                training.organization
                             )}
-
                         </p>
 
 
-                        <div class="training-meta">
-
+                        <div
+                            class="training-meta"
+                        >
 
                             <span>
-
                                 📍
                                 ${escapeHTML(
-                                    training.location ||
-                                    "Rwanda"
+                                    training.location
                                 )}
-
                             </span>
 
-
                             <span>
-
                                 ⏱
                                 ${escapeHTML(
-                                    training.duration ||
-                                    "Not specified"
+                                    training.duration
                                 )}
-
                             </span>
-
 
                             <span>
-
                                 🎓
                                 ${escapeHTML(
-                                    training.level ||
-                                    "All Levels"
+                                    training.level
                                 )}
-
                             </span>
 
-
                         </div>
+
+
+                        ${
+                            training.mode
+                                ? `
+                                    <div
+                                        class="training-mode"
+                                        style="
+                                            margin-top:8px;
+                                            font-size:13px;
+                                            opacity:.8;
+                                        "
+                                    >
+                                        💻
+                                        ${escapeHTML(
+                                            training.mode
+                                        )}
+                                    </div>
+                                  `
+                                : ""
+                        }
+
+
+                        ${
+                            training.seats
+                                ? `
+                                    <div
+                                        style="
+                                            margin-top:6px;
+                                            font-size:13px;
+                                            opacity:.8;
+                                        "
+                                    >
+                                        👥
+                                        ${escapeHTML(
+                                            training.seats
+                                        )}
+                                    </div>
+                                  `
+                                : ""
+                        }
 
 
                         <div
                             class="training-source"
                             style="
-                                font-size: 12px;
-                                opacity: .75;
-                                margin-top: 10px;
+                                font-size:12px;
+                                opacity:.75;
+                                margin-top:10px;
                             "
                         >
-
                             Source:
                             ${escapeHTML(
-                                training.source ||
-                                "Rwanda Opportunity Hub"
+                                sourceText
                             )}
-
                         </div>
 
 
@@ -1018,13 +792,9 @@ function displayTrainings(
                             <span
                                 class="training-deadline"
                             >
-
-                                Deadline:
                                 ${escapeHTML(
-                                    training.deadline ||
-                                    "No deadline"
+                                    training.deadline
                                 )}
-
                             </span>
 
 
@@ -1032,20 +802,16 @@ function displayTrainings(
                                 href="${escapeHTML(
                                     detailsLink
                                 )}"
-                                ${isExternal
-                                    ? 'target="_blank" rel="noopener noreferrer"'
-                                    : ""}
+                                ${
+                                    isExternal
+                                        ? 'target="_blank" rel="noopener noreferrer"'
+                                        : ""
+                                }
                             >
-
-                                ${isExternal
-                                    ? "Apply / View →"
-                                    : "View Details →"}
-
+                                ${actionText}
                             </a>
 
-
                         </div>
-
 
                     </article>
 
@@ -1064,125 +830,50 @@ function displayTrainings(
 function filterTrainings() {
 
     const searchTerm =
-
         trainingSearch
-
-            ? trainingSearch.value
-                .toLowerCase()
-                .trim()
-
+            ? normalize(
+                trainingSearch.value
+            )
             : "";
 
 
     const filtered =
-
         trainings.filter(
             training => {
 
-                const title =
+                const searchableText =
                     normalize(
-                        training.title
-                    );
-
-
-                const organization =
-                    normalize(
-                        training.organization
-                    );
-
-
-                const type =
-                    normalize(
-                        training.type
-                    );
-
-
-                const location =
-                    normalize(
-                        training.location
-                    );
-
-
-                const category =
-                    normalize(
-                        training.category
-                    );
-
-
-                const description =
-                    normalize(
-                        training.description
-                    );
-
-
-                const source =
-                    normalize(
-                        training.source
+                        [
+                            training.title,
+                            training.organization,
+                            training.location,
+                            training.category,
+                            training.description,
+                            training.source,
+                            training.level,
+                            training.mode
+                        ].join(" ")
                     );
 
 
                 const matchesSearch =
-
-                    !searchTerm
-
-                    ||
-
-                    title.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    organization.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    type.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    location.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    category.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    description.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    source.includes(
+                    !searchTerm ||
+                    searchableText.includes(
                         searchTerm
                     );
 
 
-                const trainingCategory =
+                const category =
                     getTrainingCategory(
                         training
                     );
 
 
                 const matchesFilter =
-
                     currentTrainingFilter ===
-                    "all"
-
-                    ||
-
-                    trainingCategory ===
-                    currentTrainingFilter;
+                        "all" ||
+                    category ===
+                        currentTrainingFilter;
 
 
                 return (
@@ -1257,7 +948,7 @@ trainingFilters.forEach(
 
 
 // =========================================
-// OPTIONAL SEARCH BUTTON
+// SEARCH BUTTON
 // =========================================
 
 const trainingSearchButton =
@@ -1277,20 +968,125 @@ if (trainingSearchButton) {
 
 
 // =========================================
-// START
+// LOAD EVERYTHING
 // =========================================
 
-loadTrainings();
+async function loadTrainings() {
+
+    if (!trainingsGrid) {
+        return;
+    }
+
+
+    trainingsGrid.innerHTML = `
+
+        <div class="no-results">
+
+            <h3>
+                Loading training programs...
+            </h3>
+
+            <p>
+                Finding the latest opportunities.
+            </p>
+
+        </div>
+
+    `;
+
+
+    try {
+
+        // Load both at the same time
+        const [
+            supabaseTrainings,
+            liveTrainings
+        ] =
+            await Promise.all([
+                loadSupabaseTrainings(),
+                loadLiveTrainings()
+            ]);
+
+
+        trainings = [
+
+            ...liveTrainings,
+
+            ...supabaseTrainings
+
+        ];
+
+
+        trainings =
+            removeDuplicateTrainings(
+                trainings
+            );
+
+
+        console.log(
+            "================================="
+        );
+
+
+        console.log(
+            "TOTAL ROH TRAININGS:",
+            trainings.length
+        );
+
+
+        console.log(
+            "LIVE TRAININGS:",
+            liveTrainings.length
+        );
+
+
+        console.log(
+            "SUPABASE TRAININGS:",
+            supabaseTrainings.length
+        );
+
+
+        console.log(
+            "================================="
+        );
+
+
+        displayTrainings(
+            trainings
+        );
+
+    }
+    catch (error) {
+
+        console.error(
+            "Failed to load trainings:",
+            error
+        );
+
+
+        trainingsGrid.innerHTML = `
+
+            <div class="no-results">
+
+                <h3>
+                    Unable to load training programs
+                </h3>
+
+                <p>
+                    Please try again later.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
 
 
 // =========================================
-// OPTIONAL GLOBAL REFRESH
-// =========================================
-//
-// You can manually call:
-// refreshTrainings();
-//
-// from the browser console.
+// REFRESH
 // =========================================
 
 async function refreshTrainings() {
@@ -1299,6 +1095,14 @@ async function refreshTrainings() {
         "Refreshing ROH training listings..."
     );
 
+
     await loadTrainings();
 
 }
+
+
+// =========================================
+// START
+// =========================================
+
+loadTrainings();
