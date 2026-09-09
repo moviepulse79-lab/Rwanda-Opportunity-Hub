@@ -107,7 +107,114 @@ function safeDate(value) {
 
 }
 
+function inferTrainingCategory(title) {
+    const t = String(title || "").toLowerCase();
 
+    if (
+        t.includes("software") ||
+        t.includes("program") ||
+        t.includes("programming") ||
+        t.includes("javascript") ||
+        t.includes("react") ||
+        t.includes("database") ||
+        t.includes("network") ||
+        t.includes("devops") ||
+        t.includes("blockchain") ||
+        t.includes("mobile") ||
+        t.includes("web") ||
+        t.includes("computer") ||
+        t.includes("cyber") ||
+        t.includes("data") ||
+        t.includes("machine learning") ||
+        t.includes("artificial intelligence") ||
+        t.includes("ai") ||
+        t.includes("python") ||
+        t.includes("java")
+    ) {
+        return "technology";
+    }
+
+    if (
+        t.includes("business") ||
+        t.includes("entrepreneur") ||
+        t.includes("management") ||
+        t.includes("leadership") ||
+        t.includes("accounting") ||
+        t.includes("finance") ||
+        t.includes("marketing")
+    ) {
+        return "business";
+    }
+
+    if (
+        t.includes("design") ||
+        t.includes("graphic") ||
+        t.includes("multimedia") ||
+        t.includes("photoshop") ||
+        t.includes("illustrator") ||
+        t.includes("ui") ||
+        t.includes("ux")
+    ) {
+        return "design";
+    }
+
+    if (
+        t.includes("hospitality") ||
+        t.includes("hotel") ||
+        t.includes("tourism") ||
+        t.includes("food") ||
+        t.includes("culinary") ||
+        t.includes("catering")
+    ) {
+        return "vocational";
+    }
+
+    if (
+        t.includes("automotive") ||
+        t.includes("mechanic") ||
+        t.includes("electrical") ||
+        t.includes("construction") ||
+        t.includes("plumbing") ||
+        t.includes("welding") ||
+        t.includes("agriculture")
+    ) {
+        return "vocational";
+    }
+
+    return "professional";
+}
+
+
+function inferTrainingLevel(title) {
+    const t = String(title || "").toLowerCase();
+
+    if (
+        t.includes("beginner") ||
+        t.includes("basic") ||
+        t.includes("basics") ||
+        t.includes("fundamental") ||
+        t.includes("introduction") ||
+        t.includes("intro")
+    ) {
+        return "Beginner";
+    }
+
+    if (
+        t.includes("advanced") ||
+        t.includes("expert") ||
+        t.includes("professional")
+    ) {
+        return "Advanced";
+    }
+
+    if (
+        t.includes("intermediate")
+    ) {
+        return "Intermediate";
+    }
+
+    return "All Levels";
+}
 // =========================================
 // RISA
 // =========================================
