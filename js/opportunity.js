@@ -863,7 +863,88 @@ console.log("PARSED DESCRIPTION:", parsed);
             }
 
         }
+// ======================================
+// SHARE OPPORTUNITY
+// ======================================
 
+const shareButton = document.getElementById("shareButton");
+
+if (shareButton) {
+
+    shareButton.onclick = async () => {
+
+        const shareUrl = window.location.href;
+
+        const shareData = {
+            title: opportunity.title || "Opportunity",
+            text: `Check out this opportunity on Rwanda Opportunity Hub: ${opportunity.title}`,
+            url: shareUrl
+        };
+
+        try {
+
+            // Mobile / supported browsers
+            if (navigator.share) {
+
+                await navigator.share(shareData);
+
+            } else {
+
+                // Desktop fallback
+                await navigator.clipboard.writeText(shareUrl);
+
+                const originalText =
+                    shareButton.innerHTML;
+
+                shareButton.innerHTML =
+                    "✓ Link Copied!";
+
+                setTimeout(() => {
+
+                    shareButton.innerHTML =
+                        originalText;
+
+                }, 2000);
+
+            }
+
+        } catch (error) {
+
+            // User pressed Cancel
+            if (error.name !== "AbortError") {
+
+                console.error(
+                    "Share failed:",
+                    error
+                );
+
+                // Final fallback
+                try {
+
+                    await navigator.clipboard.writeText(
+                        shareUrl
+                    );
+
+                    alert(
+                        "Opportunity link copied!"
+                    );
+
+                } catch (copyError) {
+
+                    console.error(
+                        "Copy failed:",
+                        copyError
+                    );
+
+                }
+
+            }
+
+        }
+
+    };
+
+}
 
         // ======================================
         // RELATED
