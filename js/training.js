@@ -37,7 +37,8 @@ let trainings = [];
 let currentTrainingFilter =
     "all";
 
-
+let trainingsPerPage = 12;
+let visibleTrainingCount = 12;
 // =========================================
 // HELPERS
 // =========================================
@@ -569,30 +570,25 @@ function getTrainingCategory(
 
 
 // =========================================
-// DISPLAY
+// DISPLAY TRAININGS + LOAD MORE
 // =========================================
 
-function displayTrainings(
-    data
-) {
+function displayTrainings(data) {
 
     if (!trainingsGrid) {
         return;
     }
 
-
+    // Total matching opportunities
     if (trainingCount) {
-
         trainingCount.textContent =
             `${data.length} Opportunities`;
-
     }
 
-
+    // No results
     if (!data.length) {
 
         trainingsGrid.innerHTML = `
-
             <div class="no-results">
 
                 <h3>
@@ -604,17 +600,22 @@ function displayTrainings(
                 </p>
 
             </div>
-
         `;
 
-        return;
+        removeLoadMoreButton();
 
+        return;
     }
 
+    // Only show the number currently allowed
+    const visibleTrainings =
+        data.slice(
+            0,
+            visibleTrainingCount
+        );
 
     trainingsGrid.innerHTML =
-
-        data.map(
+        visibleTrainings.map(
             training => {
 
                 const category =
@@ -622,31 +623,24 @@ function displayTrainings(
                         training
                     );
 
-
                 const isExternal =
                     training.isExternal;
 
-
                 const detailsLink =
                     isExternal
-                        ? training.link ||
-                          "#"
-
+                        ? training.link || "#"
                         : `opportunity.html?id=${encodeURIComponent(
                             training.id
                           )}&type=training`;
-
 
                 const actionText =
                     isExternal
                         ? "View / Apply →"
                         : "View Details →";
 
-
                 const sourceText =
                     training.source ||
                     "Rwanda Opportunity Hub";
-
 
                 return `
 
@@ -820,14 +814,108 @@ function displayTrainings(
             }
         ).join("");
 
+
+    // Update Load More button
+    updateLoadMoreButton(
+        data.length
+    );
 }
+
+
+// =========================================
+// LOAD MORE BUTTON
+// =========================================
+
+function updateLoadMoreButton(
+    totalResults
+) {
+
+    removeLoadMoreButton();
+
+    // Nothing else to load
+    if (
+        visibleTrainingCount >=
+        totalResults
+    ) {
+        return;
+    }
+
+    const remaining =
+        totalResults -
+        visibleTrainingCount;
+
+    const button =
+        document.createElement(
+            "button"
+        );
+
+    button.id =
+        "loadMoreTrainings";
+
+    button.type =
+        "button";
+
+    button.className =
+        "load-more-training-btn";
+
+    button.innerHTML = `
+        Load More
+        <span>
+            (${Math.min(
+                trainingsPerPage,
+                remaining
+            )} more)
+        </span>
+    `;
+
+    button.addEventListener(
+        "click",
+        () => {
+
+          
+visibleTrainingCount +=
+    trainingsPerPage;
+
+filterTrainings(false);
+        }
+    );
+
+
+    // Put button after the grid
+    trainingsGrid.parentNode.insertBefore(
+        button,
+        trainingsGrid.nextSibling
+    );
+}
+
+
+// =========================================
+// REMOVE LOAD MORE BUTTON
+// =========================================
+
+function removeLoadMoreButton() {
+
+    const existingButton =
+        document.getElementById(
+            "loadMoreTrainings"
+        );
+
+    if (existingButton) {
+        existingButton.remove();
+    }
+
+}
+
+
 
 
 // =========================================
 // FILTER + SEARCH
 // =========================================
 
-function filterTrainings() {
+function filterTrainings(
+    resetPagination = true
+) {
 
     const searchTerm =
         trainingSearch
@@ -883,6 +971,11 @@ function filterTrainings() {
 
             }
         );
+
+
+    if (resetPagination) {
+        visibleTrainingCount = 12;
+    }
 
 
     displayTrainings(
