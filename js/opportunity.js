@@ -1233,3 +1233,159 @@ if (shareButton) {
     }
 
 });
+
+// ======================================
+// SOCIAL SHARING
+// ======================================
+
+function setupSharing(opportunity) {
+
+    const shareUrl = window.location.href;
+
+    const title =
+        opportunity.title || "Opportunity";
+
+    const text =
+        `Check out this opportunity on Rwanda Opportunity Hub: ${title}`;
+
+    // ----------------------------------
+    // TOP SHARE BUTTON
+    // ----------------------------------
+
+    const shareButton =
+        document.getElementById("shareButton");
+
+    if (shareButton) {
+
+        shareButton.onclick = async () => {
+
+            if (navigator.share) {
+
+                try {
+
+                    await navigator.share({
+                        title: title,
+                        text: text,
+                        url: shareUrl
+                    });
+
+                } catch (error) {
+
+                    if (error.name !== "AbortError") {
+                        console.error("Share failed:", error);
+                    }
+
+                }
+
+            } else {
+
+                try {
+
+                    await navigator.clipboard.writeText(shareUrl);
+
+                    const oldText =
+                        shareButton.innerHTML;
+
+                    shareButton.innerHTML =
+                        "✓ Link Copied!";
+
+                    setTimeout(() => {
+
+                        shareButton.innerHTML =
+                            oldText;
+
+                    }, 2000);
+
+                } catch (error) {
+
+                    prompt(
+                        "Copy this opportunity link:",
+                        shareUrl
+                    );
+
+                }
+
+            }
+
+        };
+
+    }
+
+
+    // ----------------------------------
+    // WHATSAPP
+    // ----------------------------------
+
+    const whatsapp =
+        document.getElementById("shareWhatsApp");
+
+    if (whatsapp) {
+
+        whatsapp.onclick = () => {
+
+            const message =
+                `${text}\n\n${shareUrl}`;
+
+            const whatsappUrl =
+                `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+            window.open(
+                whatsappUrl,
+                "_blank"
+            );
+
+        };
+
+    }
+
+
+    // ----------------------------------
+    // FACEBOOK
+    // ----------------------------------
+
+    const facebook =
+        document.getElementById("shareFacebook");
+
+    if (facebook) {
+
+        facebook.onclick = () => {
+
+            const facebookUrl =
+                `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+
+            window.open(
+                facebookUrl,
+                "_blank",
+                "width=600,height=500"
+            );
+
+        };
+
+    }
+
+
+    // ----------------------------------
+    // LINKEDIN
+    // ----------------------------------
+
+    const linkedin =
+        document.getElementById("shareLinkedIn");
+
+    if (linkedin) {
+
+        linkedin.onclick = () => {
+
+            const linkedinUrl =
+                `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+
+            window.open(
+                linkedinUrl,
+                "_blank",
+                "width=600,height=600"
+            );
+
+        };
+
+    }
+
+}
