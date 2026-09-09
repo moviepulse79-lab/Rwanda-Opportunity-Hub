@@ -607,239 +607,546 @@ function removeDuplicates(trainings) {
     return true;
   });
 }
+
 // =========================================
 // RTB
 // =========================================
+
 async function loadRTB() {
-  const BASE = "https://www.elearning.rtb.gov.rw";
 
-  console.log("=================================");
-  console.log("Loading RTB courses...");
+    const BASE =
+        "https://www.elearning.rtb.gov.rw";
 
-  try {
-    // Public RTB Moodle search queries
-    const queries = [
-      "software development",
-      "networking",
-      "computer",
-      "hospitality",
-      "tourism",
-      "food processing",
-      "business",
-      "agriculture",
-      "multimedia",
-      "automotive"
-    ];
+    console.log("=================================");
+    console.log("Loading RTB courses...");
 
-    const allCourses = [];
-
-    for (const query of queries) {
-      try {
-        const url =
-          BASE +
-          "/course/search.php?search=" +
-          encodeURIComponent(query);
-
-        console.log("RTB search:", query);
-
-        const response = await fetch(url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "text/html,application/xhtml+xml"
-          }
-        });
-
-        if (!response.ok) {
-          console.warn(
-            `RTB search failed: ${query} HTTP ${response.status}`
-          );
-          continue;
-        }
-
-        const html = await response.text();
-
-        console.log(
-          `RTB ${query} HTML length:`,
-          html.length
-        );
+    try {
 
         /*
-         * Moodle course search results contain links like:
+         * RTB Moodle search pages.
          *
-         * /course/view.php?id=1492
-         *
-         * The course title is inside the same link.
+         * We use several searches because RTB's
+         * catalogue contains many different fields.
          */
-        const courseRegex =
-          /<a[^>]+href=["']([^"']*\/course\/view\.php\?id=\d+[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
-        let match;
+        const queries = [
+            "software",
+            "networking",
+            "computer",
+            "programming",
+            "database",
+            "business",
+            "hospitality",
+            "tourism",
+            "agriculture",
+            "food",
+            "multimedia",
+            "automotive"
+        ];
 
-        while ((match = courseRegex.exec(html)) !== null) {
-          let link = match[1];
 
-          let title = match[2]
-            .replace(/<[^>]+>/g, " ")
-            .replace(/&nbsp;/gi, " ")
-            .replace(/&amp;/gi, "&")
-            .replace(/&#39;/gi, "'")
-            .replace(/&quot;/gi, '"')
-            .replace(/&#x27;/gi, "'")
-            .replace(/\s+/g, " ")
-            .trim();
+        const courses = [];
 
-          if (!title || title.length < 3) {
-            continue;
-          }
 
-          if (link.startsWith("/")) {
-            link = BASE + link;
-          }
+        // =========================================
+        // FETCH SEARCH RESULTS
+        // =========================================
 
-          if (!link.startsWith("http")) {
-            continue;
-          }
+        for (const query of queries) {
 
-          const idMatch = link.match(
-            /course\/view\.php\?id=(\d+)/
-          );
+            try {
 
-          if (!idMatch) {
-            continue;
-          }
+                const searchURL =
+                    BASE +
+                    "/course/search.php?perpage=all&search=" +
+                    encodeURIComponent(query);
 
-          const courseId = idMatch[1];
 
-          allCourses.push({
-            id: courseId,
-            title,
-            link
-          });
+                console.log(
+                    "RTB search:",
+                    query
+                );
+
+
+                const response =
+                    await fetch(
+                        searchURL,
+                        {
+                            headers: {
+                                "User-Agent":
+                                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+
+                                "Accept":
+                                    "text/html,application/xhtml+xml"
+                            }
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    console.warn(
+                        "RTB HTTP error:",
+                        query,
+                        response.status
+                    );
+
+                    continue;
+
+                }
+
+
+                const html =
+                    await response.text();
+
+
+                console.log(
+                    "RTB HTML length:",
+                    query,
+                    html.length
+                );
+
+
+                // =================================
+                // FIND ALL COURSE URLs
+                // =================================
+
+                const hrefRegex =
+                    /href\s*=\s*["']([^"']*course\/view\.php\?id=\d+[^"']*)["']/gi;
+
+
+                let match;
+
+
+                while (
+                    (match =
+                        hrefRegex.exec(html)) !== null
+                ) {
+
+                    let href =
+                        match[1];
+
+
+                    // Decode HTML entities
+                    href =
+                        decodeHTML(href);
+
+
+                    // Convert relative URL
+                    if (
+                        href.startsWith("/")
+                    ) {
+
+                        href =
+                            BASE + href;
+
+                    }
+
+
+                    if (
+                        !href.startsWith("http")
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    // Extract Moodle course ID
+                    const idMatch =
+                        href.match(
+                            /course\/view\.php\?id=(\d+)/i
+                        );
+
+
+                    if (!idMatch) {
+
+                        continue;
+
+                    }
+
+
+                    const courseId =
+                        idMatch[1];
+
+
+                    // =================================
+                    // FIND TITLE NEAR THE LINK
+                    // =================================
+
+                    /*
+                     * Get a chunk around the link.
+                     *
+                     * Moodle puts the course title
+                     * close to its course URL.
+                     */
+
+                    const position =
+                        match.index;
+
+
+                    const chunkStart =
+                        Math.max(
+                            0,
+                            position - 1500
+                        );
+
+
+                    const chunkEnd =
+                        Math.min(
+                            html.length,
+                            position + 2500
+                        );
+
+
+                    const chunk =
+                        html.substring(
+                            chunkStart,
+                            chunkEnd
+                        );
+
+
+                    let title = "";
+
+
+                    // ---------------------------------
+                    // Try aria-label
+                    // ---------------------------------
+
+                    const ariaMatch =
+                        chunk.match(
+                            /aria-label\s*=\s*["']([^"']+)["']/i
+                        );
+
+
+                    if (
+                        ariaMatch
+                    ) {
+
+                        title =
+                            cleanText(
+                                ariaMatch[1]
+                            );
+
+                    }
+
+
+                    // ---------------------------------
+                    // Try title=""
+                    // ---------------------------------
+
+                    if (!title) {
+
+                        const titleAttr =
+                            chunk.match(
+                                /title\s*=\s*["']([^"']+)["']/i
+                            );
+
+
+                        if (
+                            titleAttr
+                        ) {
+
+                            title =
+                                cleanText(
+                                    titleAttr[1]
+                                );
+
+                        }
+
+                    }
+
+
+                    // ---------------------------------
+                    // Extract anchor containing URL
+                    // ---------------------------------
+
+                    if (!title) {
+
+                        const anchorRegex =
+                            new RegExp(
+                                "<a[^>]+href=[\"']" +
+                                href
+                                    .replace(
+                                        /[.*+?^${}()|[\]\\]/g,
+                                        "\\$&"
+                                    ) +
+                                "[\"'][^>]*>([\\\\s\\\\S]*?)<\\\\/a>",
+                                "i"
+                            );
+
+
+                        const anchorMatch =
+                            chunk.match(
+                                anchorRegex
+                            );
+
+
+                        if (
+                            anchorMatch
+                        ) {
+
+                            title =
+                                cleanText(
+                                    anchorMatch[1]
+                                );
+
+                        }
+
+                    }
+
+
+                    // ---------------------------------
+                    // Another generic anchor fallback
+                    // ---------------------------------
+
+                    if (!title) {
+
+                        const genericAnchor =
+                            chunk.match(
+                                /<a[^>]*>([\s\S]*?)<\/a>/gi
+                            );
+
+
+                        if (
+                            genericAnchor
+                        ) {
+
+                            for (
+                                const anchor
+                                of genericAnchor
+                            ) {
+
+                                const text =
+                                    cleanText(
+                                        anchor
+                                    );
+
+
+                                if (
+                                    text.length >= 4 &&
+                                    text.length <= 180 &&
+                                    !/^(home|courses|search|login|log in|dashboard)$/i.test(text)
+                                ) {
+
+                                    title =
+                                        text;
+
+                                    break;
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+
+                    if (!title) {
+
+                        continue;
+
+                    }
+
+
+                    // Remove obvious navigation text
+                    title =
+                        cleanText(title);
+
+
+                    if (
+                        !title ||
+                        title.length < 3 ||
+                        title.length > 250
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    if (
+                        /^(home|dashboard|courses|course search|search courses|login|log in)$/i.test(title)
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    courses.push({
+
+                        id:
+                            courseId,
+
+                        title,
+
+                        link:
+                            href
+
+                    });
+
+                }
+
+            }
+            catch (error) {
+
+                console.warn(
+                    "RTB query failed:",
+                    query,
+                    error.message
+                );
+
+            }
+
         }
 
-      } catch (error) {
-        console.warn(
-          `RTB query failed: ${query}`,
-          error.message
+
+        console.log(
+            "RTB raw courses:",
+            courses.length
         );
-      }
+
+
+        // =========================================
+        // REMOVE DUPLICATES
+        // =========================================
+
+        const uniqueCourses =
+            removeDuplicates(
+                courses.map(course => ({
+
+                    ...course,
+
+                    id:
+                        "rtb-" +
+                        course.id
+
+                }))
+            );
+
+
+        console.log(
+            "RTB unique courses:",
+            uniqueCourses.length
+        );
+
+
+        // =========================================
+        // CONVERT TO ROH FORMAT
+        // =========================================
+
+        const trainings =
+            uniqueCourses
+                .map(course => {
+
+                    const title =
+                        cleanText(
+                            course.title
+                        );
+
+
+                    if (!title) {
+
+                        return null;
+
+                    }
+
+
+                    return {
+
+                        id:
+                            course.id,
+
+                        title,
+
+                        organization:
+                            "Rwanda TVET Board (RTB)",
+
+                        type:
+                            "training",
+
+                        category:
+                            inferTrainingCategory(
+                                title
+                            ),
+
+                        location:
+                            "Rwanda",
+
+                        country:
+                            "Rwanda",
+
+                        mode:
+                            "Online / E-learning",
+
+                        level:
+                            inferTrainingLevel(
+                                title
+                            ),
+
+                        duration:
+                            "Self-paced",
+
+                        deadline:
+                            "",
+
+                        description:
+                            `Training course available through the official RTB E-Learning platform.`,
+
+                        requirements:
+                            "Check the official RTB E-Learning platform for course access and enrollment requirements.",
+
+                        link:
+                            course.link,
+
+                        source:
+                            "RTB E-Learning",
+
+                        verified:
+                            true,
+
+                        isExternal:
+                            true,
+
+                        created_at:
+                            new Date()
+                                .toISOString()
+
+                    };
+
+                })
+                .filter(Boolean);
+
+
+        const finalTrainings =
+            removeDuplicates(
+                trainings
+            );
+
+
+        console.log(
+            "RTB trainings found:",
+            finalTrainings.length
+        );
+
+
+        return finalTrainings;
+
+    }
+    catch (error) {
+
+        console.error(
+            "RTB feed error:",
+            error
+        );
+
+        return [];
+
     }
 
-    console.log(
-      "RTB raw courses discovered:",
-      allCourses.length
-    );
-
-    // -------------------------------------------------
-    // Remove duplicate courses
-    // -------------------------------------------------
-
-    const uniqueCourses = removeDuplicates(
-      allCourses.map(course => ({
-        ...course,
-        id: "rtb-" + course.id
-      }))
-    );
-
-    console.log(
-      "RTB unique courses:",
-      uniqueCourses.length
-    );
-
-    // -------------------------------------------------
-    // Convert to ROH training objects
-    // -------------------------------------------------
-
-    const trainings = uniqueCourses
-      .map(course => {
-
-        const title = cleanText(course.title);
-
-        if (!title) {
-          return null;
-        }
-
-        return {
-          id: course.id,
-
-          title,
-
-          organization:
-            "Rwanda TVET Board (RTB)",
-
-          type:
-            "training",
-
-          category:
-            inferTrainingCategory(title),
-
-          location:
-            "Rwanda",
-
-          country:
-            "Rwanda",
-
-          mode:
-            "Online / E-learning",
-
-          level:
-            inferTrainingLevel(title),
-
-          duration:
-            "Self-paced",
-
-          deadline:
-            "",
-
-          description:
-            `Training course available through the official RTB E-Learning platform.`,
-
-          requirements:
-            "Check the official RTB E-Learning platform for course access and enrollment requirements.",
-
-          link:
-            course.link,
-
-          source:
-            "RTB E-Learning",
-
-          verified:
-            true,
-
-          isExternal:
-            true,
-
-          created_at:
-            new Date().toISOString()
-        };
-      })
-      .filter(Boolean);
-
-    // -------------------------------------------------
-    // Final duplicate protection
-    // -------------------------------------------------
-
-    const finalTrainings =
-      removeDuplicates(trainings);
-
-    console.log(
-      "RTB trainings found:",
-      finalTrainings.length
-    );
-
-    return finalTrainings;
-
-  } catch (error) {
-
-    console.error(
-      "RTB feed error:",
-      error
-    );
-
-    return [];
-  }
 }
-
 
 
 // =========================================
