@@ -1,0 +1,689 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Dashboard | Rwanda Opportunity Hub</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/admin.css"
+    >
+
+</head>
+
+
+<body>
+
+<div class="admin-layout">
+
+
+    <!-- =====================================
+         SIDEBAR
+    ====================================== -->
+
+    <aside class="admin-sidebar">
+
+        <div class="admin-logo">
+
+           <div class="logo-mark">
+                   <img src="logo.png" alt="Rwanda Opportunity Hub Logo">
+                </div>
+
+            <div>
+
+                <strong>
+                    Rwanda
+                </strong>
+
+                <span>
+                    Opportunity Hub
+                </span>
+
+            </div>
+
+        </div>
+
+
+       <nav class="admin-nav">
+
+    <a
+        href="#"
+        class="admin-nav-link active"
+        data-section="dashboard"
+    >
+        📊
+        <span>Dashboard</span>
+    </a>
+
+    <a
+        href="#"
+        class="admin-nav-link"
+        data-section="opportunities"
+    >
+        💼
+        <span>Opportunities</span>
+    </a>
+
+    <a
+        href="#"
+        class="admin-nav-link"
+        data-section="submissions"
+    >
+        ⏳
+        <span>Pending Submissions</span>
+    </a>
+
+    <a
+        href="#"
+        class="admin-nav-link"
+        data-section="resources"
+    >
+        📚
+        <span>Resources</span>
+    </a>
+
+    <a
+        href="#"
+        class="admin-nav-link"
+        data-section="advertisements"
+    >
+        📢
+        <span>Advertisements</span>
+    </a>
+
+    <a
+        href="#"
+        class="admin-nav-link"
+        data-section="add"
+    >
+        ➕
+        <span>Add Opportunity</span>
+    </a>
+
+</nav>
+
+
+        <div class="admin-sidebar-bottom">
+
+            <a href="index.html">
+                🌐 View Website
+            </a>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =====================================
+         MAIN
+    ====================================== -->
+
+    <main class="admin-main">
+
+
+        <!-- HEADER -->
+
+        <header class="admin-header">
+
+            <div>
+
+                <h1 id="pageTitle">
+                    Dashboard
+                </h1>
+
+                <p>
+                    Manage Rwanda Opportunity Hub
+                </p>
+
+            </div>
+
+
+            <div class="admin-user">
+
+                <div class="admin-avatar">
+                    A
+                </div>
+
+                <div>
+
+                    <strong>
+                        Administrator
+                    </strong>
+
+                    <span>
+                        Admin
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================
+             DASHBOARD
+        ================================== -->
+
+        <section
+            id="dashboardSection"
+            class="admin-section active"
+        >
+
+            <div class="stats-grid">
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        💼
+                    </div>
+
+                    <span>
+                        Opportunities
+                    </span>
+
+                    <strong id="totalOpportunities">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        💼
+                    </div>
+
+                    <span>
+                        Jobs
+                    </span>
+
+                    <strong id="totalJobs">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        🎓
+                    </div>
+
+                    <span>
+                        Scholarships
+                    </span>
+
+                    <strong id="totalScholarships">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        📚
+                    </div>
+
+                    <span>
+                        Resources
+                    </span>
+
+                    <strong id="totalResources">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="admin-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Recent Opportunities
+                        </h2>
+
+                        <p>
+                            Latest opportunities on the platform
+                        </p>
+
+                    </div>
+
+                    <button
+                        class="admin-primary-btn"
+                        data-section="add"
+                    >
+                        + Add Opportunity
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="recentOpportunities"
+                    class="admin-table-wrapper"
+                >
+                    <!-- JavaScript -->
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================
+             OPPORTUNITIES
+        ================================== -->
+
+        <section
+            id="opportunitiesSection"
+            class="admin-section"
+        >
+
+            <div class="admin-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            All Opportunities
+                        </h2>
+
+                        <p>
+                            Manage jobs, scholarships,
+                            internships and more.
+                        </p>
+
+                    </div>
+
+                    <button
+                        class="admin-primary-btn"
+                        data-section="add"
+                    >
+                        + Add Opportunity
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="allOpportunities"
+                    class="admin-table-wrapper"
+                >
+                    <!-- JavaScript -->
+                </div>
+
+            </div>
+
+        </section>
+
+<!-- =================================
+     ADVERTISEMENTS
+================================= -->
+
+<section
+    id="advertisementsSection"
+    class="admin-section"
+>
+
+    <div class="admin-panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>
+                    Advertisement Requests
+                </h2>
+
+                <p>
+                    Review and manage advertisement requests.
+                </p>
+
+            </div>
+
+        </div>
+
+        <div
+            id="adminAdvertisements"
+            class="admin-table-wrapper"
+        >
+            <!-- JavaScript will load advertisements here -->
+        </div>
+
+    </div>
+
+</section>
+
+        
+
+        <!-- =================================
+             RESOURCES
+        ================================== -->
+
+        <section
+            id="resourcesSection"
+            class="admin-section"
+        >
+
+            <div class="admin-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Resources
+                        </h2>
+
+                        <p>
+                            Manage career guides and
+                            helpful resources.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="adminResources"
+                    class="admin-table-wrapper"
+                >
+                    <!-- JavaScript -->
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================
+             ADD OPPORTUNITY
+        ================================== -->
+
+        <section
+            id="addSection"
+            class="admin-section"
+        >
+
+            <div class="admin-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Add Opportunity
+                        </h2>
+
+                        <p>
+                            Create a new opportunity.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="opportunityForm"
+                    class="admin-form"
+                >
+
+
+                    <div class="form-grid">
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Title
+                            </label>
+<input
+    type="text"
+    id="opportunityTitle"
+    name="title"
+    placeholder="e.g. Software Developer"
+    required
+>
+
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Organization
+                            </label>
+
+                          <input
+    type="text"
+    id="opportunityOrganization"
+    name="organization"
+    placeholder="Organization name"
+    required
+> 
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Type
+                            </label>
+
+                            <select
+    id="opportunityType"
+    name="type"
+    required
+>
+
+                                <option value="">
+                                    Select type
+                                </option>
+
+                                <option value="job">
+                                    Job
+                                </option>
+
+                                <option value="scholarship">
+                                    Scholarship
+                                </option>
+
+                                <option value="internship">
+                                    Internship
+                                </option>
+
+                                <option value="fellowship">
+                                    Fellowship
+                                </option>
+
+                                <option value="training">
+                                    Training
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Location
+                            </label>
+
+<input
+    type="text"
+    id="opportunityLocation"
+    name="location"
+    placeholder="Kigali, Rwanda"
+    required
+>
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Application Link
+                            </label>
+
+                            <input
+    type="url"
+    id="opportunityLink"
+    name="link"
+    placeholder="https://..."
+    required
+>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Deadline
+                            </label>
+
+                           <input
+    type="date"
+    id="opportunityDeadline"
+    name="deadline"
+    required
+>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Posted Date
+                            </label>
+
+                           <input
+    type="date"
+    id="opportunityPosted"
+    name="posted"
+    required
+>
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Description
+                            </label>
+
+                            <textarea
+    id="opportunityDescription"
+    name="description"
+    rows="6"
+    placeholder="Describe the opportunity..."
+    required
+></textarea>
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Requirements
+                            </label>
+
+                            <textarea
+    id="opportunityRequirements"
+    name="requirements"
+    rows="6"
+    placeholder="Enter requirements, one per line..."
+></textarea>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="form-actions">
+
+                        <button
+    type="button"
+    id="cancelEditBtn"
+    class="admin-secondary-btn"
+>
+    Clear
+</button>
+
+                        <button
+                            type="submit"
+                            class="admin-primary-btn"
+                        >
+                            Publish Opportunity
+                        </button>
+
+                    </div>
+
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+
+<script src="js/admin-auth.js"></script>
+
+<script src="js/admin.js"></script>
+
+
+</body>
+
+</html>
+

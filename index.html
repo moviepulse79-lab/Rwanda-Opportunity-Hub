@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Rwanda Opportunity Hub | Your Future Starts Here</title>
+
+    <meta
+        name="description"
+        content="Discover verified jobs, scholarships, internships, fellowships and training opportunities in Rwanda and beyond."
+    >
+
+    <link rel="icon" href="logo.png" type="image/png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body data-page="home">
+
+    <!-- =========================
+         NAVBAR
+    ========================== -->
+
+    <header class="navbar">
+
+        <div class="nav-container">
+
+            <a href="index.html" class="logo">
+
+                <div class="logo-mark">
+                   <img src="logo.png" alt="Rwanda Opportunity Hub Logo">
+                </div>
+
+                <div class="logo-text">
+                    <span>Rwanda</span>
+                    <strong>Opportunity Hub</strong>
+                </div>
+
+            </a>
+
+            <nav class="nav-links">
+
+                <a href="index.html" class="active">Home</a>
+                <a href="jobs.html">Jobs</a>
+                <a href="scholarships.html">Scholarships</a>
+                <a href="internships.html">Internships</a>
+                <a href="fellowships.html">Fellowships</a>
+                <a href="training.html">Training</a>
+
+            </nav>
+
+            <a href="advertise.html" class="nav-button">
+                Advertise With Us
+            </a>
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Open menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================
+         MOBILE MENU
+    ========================== -->
+
+    <div class="mobile-menu" id="mobileMenu">
+
+        <a href="index.html" class="active">Home</a>
+        <a href="jobs.html">Jobs</a>
+        <a href="scholarships.html">Scholarships</a>
+        <a href="internships.html">Internships</a>
+        <a href="fellowships.html">Fellowships</a>
+        <a href="training.html">Training</a>
+        <a href="resources.html">Resources</a>
+
+        <a href="advertise.html" class="mobile-advertise">
+            Advertise With Us
+        </a>
+
+    </div>
+
+
+    <!-- =========================
+         HERO
+    ========================== -->
+
+    <main>
+
+        <section class="hero">
+
+            <div class="hero-background"></div>
+
+            <div class="hero-container">
+
+                <div class="hero-content">
+
+                    <div class="hero-badge">
+                        <span class="pulse"></span>
+                        Verified opportunities for Rwanda
+                    </div>
+
+                    <h1>
+                        Your Future
+                        <span>Starts Here.</span>
+                    </h1>
+
+                    <p>
+                        Discover jobs, scholarships, internships, fellowships
+                        and training opportunities designed to help you move
+                        forward.
+                    </p>
+
+                    <!-- SEARCH -->
+
+                    <div class="hero-search">
+
+                        <div class="search-field">
+
+                            <span class="search-icon">⌕</span>
+
+                            <input
+                                type="text"
+                                placeholder="Search opportunities..."
+                                id="heroSearch"
+                            >
+
+                        </div>
+
+                        <div class="search-category">
+
+                            <select id="heroCategory">
+
+                                <option value="">All Categories</option>
+                                <option value="jobs">Jobs</option>
+                                <option value="scholarships">Scholarships</option>
+                                <option value="internships">Internships</option>
+                                <option value="fellowships">Fellowships</option>
+                                <option value="training">Training</option>
+
+                            </select>
+
+                        </div>
+
+                        <button class="search-button" id="searchButton">
+                            Search Opportunities
+                        </button>
+
+                    </div>
+
+
+                    <div class="hero-links">
+
+                        <span>Popular:</span>
+
+                        <a href="jobs.html">Jobs</a>
+                        <a href="scholarships.html">Scholarships</a>
+                        <a href="internships.html">Internships</a>
+                        <a href="training.html">Training</a>
+
+                    </div>
+
+                </div>
+
+
+                <!-- HERO STATS -->
+
+                <div class="hero-stats">
+
+                    <div class="stat">
+                        <strong>500+</strong>
+                        <span>Opportunities</span>
+                    </div>
+
+                    <div class="stat">
+                        <strong>100+</strong>
+                        <span>Organizations</span>
+                    </div>
+
+                    <div class="stat">
+                        <strong>50+</strong>
+                        <span>Verified Listings</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+      
+
+
+ <!-- =========================
+     APPROVED ADVERTISEMENT
+========================= -->
+
+<section class="public-ad-section" id="publicAdvertisementSection">
+
+    <div class="section-container">
+
+        <div id="publicAdvertisement">
+            <!-- Approved advertisements will appear here -->
+        </div>
+
+    </div>
+
+</section>
+
+
+
+
+<section class="categories section">
+
+
+        <!-- =========================
+             CATEGORIES
+        ========================== -->
+
+        <section class="categories section">
+
+            <div class="section-container">
+
+                <div class="section-heading">
+
+                    <div>
+                        <span class="eyebrow">EXPLORE</span>
+
+                        <h2>
+                            Find the right
+                            <span>opportunity.</span>
+                        </h2>
+                    </div>
+
+                    <a href="jobs.html" class="view-all">
+                        View All Opportunities →
+                    </a>
+
+                </div>
+
+
+                <div class="category-grid">
+
+                    <a href="jobs.html" class="category-card">
+
+                        <div class="category-icon jobs-icon">
+                            💼
+                        </div>
+
+                        <div>
+                            <h3>Jobs</h3>
+                            <p>Find your next career opportunity.</p>
+                            <span>Explore Jobs →</span>
+                        </div>
+
+                    </a>
+
+
+                    <a href="scholarships.html" class="category-card">
+
+                        <div class="category-icon scholarship-icon">
+                            🎓
+                        </div>
+
+                        <div>
+                            <h3>Scholarships</h3>
+                            <p>Fund your education and dreams.</p>
+                            <span>Find Scholarships →</span>
+                        </div>
+
+                    </a>
+
+
+                    <a href="internships.html" class="category-card">
+
+                        <div class="category-icon internship-icon">
+                            🚀
+                        </div>
+
+                        <div>
+                            <h3>Internships</h3>
+                            <p>Gain experience and build your career.</p>
+                            <span>Explore Internships →</span>
+                        </div>
+
+                    </a>
+
+
+                    <a href="fellowships.html" class="category-card">
+
+                        <div class="category-icon fellowship-icon">
+                            🌍
+                        </div>
+
+                        <div>
+                            <h3>Fellowships</h3>
+                            <p>Grow through global opportunities.</p>
+                            <span>Explore Fellowships →</span>
+                        </div>
+
+                    </a>
+
+
+                    <a href="training.html" class="category-card">
+
+                        <div class="category-icon training-icon">
+                            📚
+                        </div>
+
+                        <div>
+                            <h3>Training</h3>
+                            <p>Learn new skills and stay competitive.</p>
+                            <span>Find Training →</span>
+                        </div>
+
+                    </a>
+
+
+                    <a href="resources.html" class="category-card">
+
+                        <div class="category-icon resource-icon">
+                            🧭
+                        </div>
+
+                        <div>
+                            <h3>Resources</h3>
+                            <p>Tools to help you reach your goals.</p>
+                            <span>Explore Resources →</span>
+                        </div>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================
+             VERIFIED OPPORTUNITIES
+        ========================== -->
+
+        <section class="verified section">
+
+            <div class="section-container">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="eyebrow">TRUSTED OPPORTUNITIES</span>
+
+                        <h2>
+                            <span>Verified.</span>
+                            Reliable. Real.
+                        </h2>
+
+                        <p class="section-description">
+                            We help you discover opportunities from organizations
+                            and institutions you can trust.
+                        </p>
+
+                    </div>
+
+                    <a href="jobs.html" class="view-all">
+                        See All →
+                    </a>
+
+                </div>
+
+<div class="opportunity-grid" id="homeOpportunities">
+
+    <!-- Opportunities will be loaded from Supabase -->
+
+</div>
+
+        </section>
+
+
+        <!-- =========================
+             WHY US
+        ========================== -->
+
+        <section class="why-us section">
+
+            <div class="section-container why-grid">
+
+                <div class="why-content">
+
+                    <span class="eyebrow">
+                        WHY OPPORTUNITY HUB?
+                    </span>
+
+                    <h2>
+                        Opportunities should be
+                        <span>easy to find.</span>
+                    </h2>
+
+                    <p>
+                        Searching for the right opportunity shouldn't mean
+                        spending hours jumping between websites, social media
+                        pages and scattered announcements.
+                    </p>
+
+                    <p>
+                        Rwanda Opportunity Hub brings opportunities together
+                        in one simple, trusted platform.
+                    </p>
+
+                    <a href="jobs.html" class="primary-button">
+                        Explore Opportunities
+                    </a>
+
+                </div>
+
+
+                <div class="benefits">
+
+                    <div class="benefit">
+
+                        <div class="benefit-icon">
+                            ✓
+                        </div>
+
+                        <div>
+                            <h3>Verified Opportunities</h3>
+
+                            <p>
+                                We focus on helping users identify legitimate
+                                and trustworthy listings.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="benefit">
+
+                        <div class="benefit-icon">
+                            🔎
+                        </div>
+
+                        <div>
+                            <h3>Everything in One Place</h3>
+
+                            <p>
+                                Jobs, scholarships, internships, fellowships
+                                and training in one platform.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="benefit">
+
+                        <div class="benefit-icon">
+                            📱
+                        </div>
+
+                        <div>
+                            <h3>Built for Rwanda</h3>
+
+                            <p>
+                                Designed with Rwandan students, graduates and
+                                professionals in mind.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             ADVERTISE CTA
+        ========================== -->
+
+        <section class="advertise-cta">
+
+            <div class="section-container">
+
+                <div class="advertise-content">
+
+                    <span class="eyebrow">
+                        FOR ORGANIZATIONS
+                    </span>
+
+                    <h2>
+                        Have an opportunity?
+                    </h2>
+
+                    <p>
+                        Reach talented students, graduates and professionals
+                        across Rwanda by advertising your opportunity on
+                        Rwanda Opportunity Hub.
+                    </p>
+
+                    <a href="advertise.html" class="advertise-button">
+                        Advertise With Us →
+                    </a>
+
+                </div>
+
+
+                <div class="advertise-decoration">
+
+                    <div class="floating-card card-one">
+                        💼
+                    </div>
+
+                    <div class="floating-card card-two">
+                        🎓
+                    </div>
+
+                    <div class="floating-card card-three">
+                        🚀
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+
+    <footer class="footer">
+
+        <div class="section-container footer-grid">
+
+
+            <div class="footer-brand">
+
+                <a href="index.html" class="logo">
+
+                    <div class="logo-mark">
+                      <img src="logo.png" alt="Rwanda Opportunity Hub Logo">
+                    </div>
+
+                    <div class="logo-text">
+                        <span>Rwanda</span>
+                        <strong>Opportunity Hub</strong>
+                    </div>
+
+                </a>
+
+                <p>
+                    Connecting Rwanda with opportunities that
+                    help people learn, grow and build better futures.
+                </p>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h4>Explore</h4>
+
+                <a href="jobs.html">Jobs</a>
+                <a href="scholarships.html">Scholarships</a>
+                <a href="internships.html">Internships</a>
+                <a href="fellowships.html">Fellowships</a>
+                <a href="training.html">Training</a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h4>Platform</h4>
+
+                <a href="resources.html">Resources</a>
+                <a href="advertise.html">Advertise With Us</a>
+                <a href="#">About Us</a>
+                <a href="#">Contact</a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h4>Stay Updated</h4>
+
+                <p>
+                    Get new opportunities delivered to you.
+                </p>
+
+                <form class="newsletter">
+
+                    <input
+                        type="email"
+                        placeholder="Your email address"
+                    >
+
+                    <button type="submit">
+                        →
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            <div class="section-container">
+
+                <p>
+                    © 2026 Rwanda Opportunity Hub. All rights reserved.
+                </p>
+
+                <div class="footer-rwanda">
+                    Made for Rwanda 🇷🇼
+                </div>
+
+            </div>
+
+        </div>
+
+    </footer>
+
+
+  <script src="js/main.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+<script src="js/ads.js"></script>
+
+<script src="js/home.js"></script>
+
+</body>
+</html>
+
+</body>
+</html>

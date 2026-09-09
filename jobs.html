@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Jobs in Rwanda | Rwanda Opportunity Hub</title>
+
+    <meta
+        name="description"
+        content="Discover verified jobs and career opportunities in Rwanda and beyond."
+    >
+
+    <link rel="icon" href="logo.png" type="image/png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/jobs.css">
+</head>
+
+<body data-page="jobs">
+
+    <!-- =================================
+         NAVBAR
+    ================================== -->
+
+    <header class="navbar">
+
+        <div class="nav-container">
+
+            <a href="index.html" class="logo">
+
+                <div class="logo-mark">
+                    <img
+                        src="logo.png"
+                        alt="Rwanda Opportunity Hub Logo"
+                    >
+                </div>
+
+                <div class="logo-text">
+                    <span>Rwanda</span>
+                    <strong>Opportunity Hub</strong>
+                </div>
+
+            </a>
+
+
+            <nav class="nav-links">
+
+                <a href="index.html">Home</a>
+
+                <a href="jobs.html" class="active">
+                    Jobs
+                </a>
+
+                <a href="scholarships.html">
+                    Scholarships
+                </a>
+
+                <a href="internships.html">
+                    Internships
+                </a>
+
+                <a href="fellowships.html">
+                    Fellowships
+                </a>
+
+                <a href="training.html">
+                    Training
+                </a>
+
+            </nav>
+
+
+            <a
+                href="advertise.html"
+                class="nav-button"
+            >
+                Advertise With Us
+            </a>
+
+
+            <button
+                class="menu-toggle"
+                id="menuToggle"
+                aria-label="Open menu"
+            >
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =================================
+         MOBILE MENU
+    ================================== -->
+
+    <div
+        class="mobile-menu"
+        id="mobileMenu"
+    >
+
+        <a href="index.html">
+            Home
+        </a>
+
+        <a
+            href="jobs.html"
+            class="active"
+        >
+            Jobs
+        </a>
+
+        <a href="scholarships.html">
+            Scholarships
+        </a>
+
+        <a href="internships.html">
+            Internships
+        </a>
+
+        <a href="fellowships.html">
+            Fellowships
+        </a>
+
+        <a href="training.html">
+            Training
+        </a>
+
+        <a href="resources.html">
+            Resources
+        </a>
+
+        <a
+            href="advertise.html"
+            class="mobile-advertise"
+        >
+            Advertise With Us
+        </a>
+
+    </div>
+
+
+    <!-- =================================
+         JOB HERO
+    ================================== -->
+
+    <main>
+
+        <section class="jobs-hero">
+
+            <div class="section-container">
+
+                <div class="jobs-hero-content">
+
+                    <span class="eyebrow">
+                        CAREER OPPORTUNITIES
+                    </span>
+
+                    <h1>
+                        Find Your Next
+                        <span>Opportunity.</span>
+                    </h1>
+
+                    <p>
+                        Explore verified job opportunities from organizations
+                        hiring in Rwanda and beyond.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+ <!-- PUBLIC ADVERTISEMENT -->
+<section id="publicAdvertisementSection" class="public-ad-section">
+    <div class="public-ad-container" id="publicAdvertisement">
+        <!-- Approved ads will appear here -->
+    </div>
+</section>
+
+        <!-- =================================
+             SEARCH + FILTERS
+        ================================== -->
+
+        <section class="jobs-search-section">
+
+            <div class="section-container">
+
+                <div class="jobs-search-box">
+
+                    <div class="jobs-search-input">
+
+                        <span>⌕</span>
+
+                        <input
+                            type="text"
+                            id="jobSearch"
+                            placeholder="Search job title, company or keyword..."
+                        >
+
+                    </div>
+
+
+                    <div class="job-filter">
+
+                        <select id="locationFilter">
+
+                            <option value="">
+                                All Locations
+                            </option>
+
+                            <option value="Kigali">
+                                Kigali
+                            </option>
+
+                            <option value="Huye">
+                                Huye
+                            </option>
+
+                            <option value="Musanze">
+                                Musanze
+                            </option>
+
+                            <option value="Rubavu">
+                                Rubavu
+                            </option>
+
+                            <option value="Remote">
+                                Remote
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="job-filter">
+
+                        <select id="typeFilter">
+
+                            <option value="">
+                                Job Type
+                            </option>
+
+                            <option value="Full Time">
+                                Full Time
+                            </option>
+
+                            <option value="Part Time">
+                                Part Time
+                            </option>
+
+                            <option value="Contract">
+                                Contract
+                            </option>
+
+                            <option value="Remote">
+                                Remote
+                            </option>
+
+                            <option value="Internship">
+                                Internship
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        class="job-search-button"
+                        id="jobSearchButton"
+                    >
+                        Search
+                    </button>
+
+                </div>
+
+
+                <div class="advanced-filters">
+
+                    <select id="experienceFilter">
+
+                        <option value="">
+                            Experience Level
+                        </option>
+
+                        <option value="Entry Level">
+                            Entry Level
+                        </option>
+
+                        <option value="Mid Level">
+                            Mid Level
+                        </option>
+
+                        <option value="Senior Level">
+                            Senior Level
+                        </option>
+
+                    </select>
+
+
+                    <select id="categoryFilter">
+
+                        <option value="">
+                            Job Category
+                        </option>
+
+                        <option value="Technology">
+                            Technology
+                        </option>
+
+                        <option value="Finance">
+                            Finance
+                        </option>
+
+                        <option value="Marketing">
+                            Marketing
+                        </option>
+
+                        <option value="Administration">
+                            Administration
+                        </option>
+
+                        <option value="Sales">
+                            Sales
+                        </option>
+
+                        <option value="Engineering">
+                            Engineering
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        class="clear-filters"
+                        id="clearFilters"
+                    >
+                        Clear Filters
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================
+             JOB LISTINGS
+        ================================== -->
+
+        <section class="jobs-section">
+
+            <div class="section-container">
+
+
+                <div class="jobs-heading">
+
+                    <div>
+
+                        <span class="eyebrow">
+                            LATEST JOBS
+                        </span>
+
+                        <h2>
+                            Jobs you may be
+                            <span>looking for.</span>
+                        </h2>
+
+                    </div>
+
+
+                    <div class="jobs-count">
+
+                        <strong id="jobsCount">
+                            6
+                        </strong>
+
+                        opportunities found
+
+                    </div>
+
+                </div>
+
+               <div class="jobs-grid" id="jobsGrid">
+    <!-- Jobs will be loaded automatically -->
+</div>
+              
+
+                <!-- =================================
+                     NO RESULTS
+                ================================== -->
+
+                <div
+                    class="no-results"
+                    id="noResults"
+                >
+
+                    <div>
+                        🔎
+                    </div>
+
+                    <h3>
+                        No opportunities found
+                    </h3>
+
+                    <p>
+                        Try changing your search or filters.
+                    </p>
+
+                </div>
+
+
+                <!-- =================================
+                     LOAD MORE
+                ================================== -->
+
+                <div class="load-more">
+
+                    <button id="loadMore">
+                        Load More Opportunities
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================
+             ADVERTISE CTA
+        ================================== -->
+
+        <section class="jobs-advertise">
+
+            <div class="section-container">
+
+                <div>
+
+                    <span class="eyebrow">
+                        FOR EMPLOYERS
+                    </span>
+
+                    <h2>
+                        Looking for talented people?
+                    </h2>
+
+                    <p>
+                        Reach thousands of students, graduates and
+                        professionals looking for their next opportunity.
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="advertise.html"
+                    class="advertise-button"
+                >
+                    Post a Job →
+                </a>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =================================
+         FOOTER
+    ================================== -->
+
+    <footer class="footer">
+
+        <div class="section-container footer-grid">
+
+
+            <div class="footer-brand">
+
+                <a
+                    href="index.html"
+                    class="logo"
+                >
+
+                    <div class="logo-mark">
+
+                        <img
+                            src="logo.png"
+                            alt="Rwanda Opportunity Hub Logo"
+                        >
+
+                    </div>
+
+                    <div class="logo-text">
+
+                        <span>Rwanda</span>
+
+                        <strong>
+                            Opportunity Hub
+                        </strong>
+
+                    </div>
+
+                </a>
+
+
+                <p>
+                    Connecting Rwanda with opportunities that help people
+                    learn, grow and build better futures.
+                </p>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h4>
+                    Explore
+                </h4>
+
+                <a href="jobs.html">
+                    Jobs
+                </a>
+
+                <a href="scholarships.html">
+                    Scholarships
+                </a>
+
+                <a href="internships.html">
+                    Internships
+                </a>
+
+                <a href="fellowships.html">
+                    Fellowships
+                </a>
+
+                <a href="training.html">
+                    Training
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h4>
+                    Platform
+                </h4>
+
+                <a href="resources.html">
+                    Resources
+                </a>
+
+                <a href="advertise.html">
+                    Advertise With Us
+                </a>
+
+                <a href="#">
+                    About Us
+                </a>
+
+                <a href="#">
+                    Contact
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h4>
+                    Stay Updated
+                </h4>
+
+                <p>
+                    Get new opportunities delivered to you.
+                </p>
+
+                <form class="newsletter">
+
+                    <input
+                        type="email"
+                        placeholder="Your email address"
+                    >
+
+                    <button type="submit">
+                        →
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            <div class="section-container">
+
+                <p>
+                    © 2026 Rwanda Opportunity Hub.
+                    All rights reserved.
+                </p>
+
+                <div class="footer-rwanda">
+                    Made for Rwanda 🇷🇼
+                </div>
+
+            </div>
+
+        </div>
+
+    </footer>
+    <script src="js/main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/ads.js"></script>
+<script src="js/jobs.js"></script>>
+
+</body>
+
+</html>

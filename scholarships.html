@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Scholarships | Rwanda Opportunity Hub</title>
+
+    <link rel="icon" href="logo.png" type="image/png">
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/scholarships.css">
+</head>
+
+<body data-page="scholarships">
+
+<header class="navbar">
+
+    <div class="nav-container">
+
+        <a href="index.html" class="logo">
+
+            <div class="logo-mark">
+                <img src="logo.png"
+                     alt="Rwanda Opportunity Hub Logo">
+            </div>
+
+            <div class="logo-text">
+                <span>Rwanda</span>
+                <strong>Opportunity Hub</strong>
+            </div>
+
+        </a>
+
+
+        <nav class="nav-links">
+
+            <a href="index.html">Home</a>
+            <a href="jobs.html">Jobs</a>
+
+            <a href="scholarships.html"
+               class="active">
+                Scholarships
+            </a>
+
+            <a href="internships.html">
+                Internships
+            </a>
+
+            <a href="fellowships.html">
+                Fellowships
+            </a>
+
+            <a href="training.html">
+                Training
+            </a>
+
+        </nav>
+
+
+        <a href="advertise.html"
+           class="nav-button">
+            Advertise With Us
+        </a>
+
+
+        <button class="menu-toggle"
+                id="menuToggle">
+
+            <span></span>
+            <span></span>
+            <span></span>
+
+        </button>
+
+    </div>
+
+</header>
+
+
+<!-- MOBILE MENU -->
+
+<div class="mobile-menu"
+     id="mobileMenu">
+
+    <a href="index.html">
+        Home
+    </a>
+
+    <a href="jobs.html">
+        Jobs
+    </a>
+
+    <a href="scholarships.html"
+       class="active">
+        Scholarships
+    </a>
+
+    <a href="internships.html">
+        Internships
+    </a>
+
+    <a href="fellowships.html">
+        Fellowships
+    </a>
+
+    <a href="training.html">
+        Training
+    </a>
+
+    <a href="resources.html">
+        Resources
+    </a>
+
+    <a href="advertise.html"
+       class="mobile-advertise">
+        Advertise With Us
+    </a>
+
+</div>
+
+
+<main>
+
+
+<!-- =========================================
+     SCHOLARSHIP HERO
+========================================= -->
+
+<section class="scholarship-hero">
+
+    <div class="section-container">
+
+        <span class="eyebrow">
+            EDUCATION OPPORTUNITIES
+        </span>
+
+        <h1>
+            Fund Your
+            <span>Future.</span>
+        </h1>
+
+        <p>
+            Discover scholarships and funding opportunities
+            for students and professionals in Rwanda.
+        </p>
+
+
+        <div class="scholarship-search">
+
+            <input
+                type="text"
+                id="scholarshipSearch"
+                placeholder="Search scholarships..."
+            >
+
+            <button id="searchButton">
+                🔍 Search
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ADVERTISEMENT -->
+<div id="advertisementContainer"></div>
+<!-- =========================================
+     SCHOLARSHIP CONTENT
+========================================= -->
+
+<section class="scholarship-section">
+
+    <div class="section-container">
+
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="eyebrow">
+                    EXPLORE
+                </span>
+
+                <h2>
+                    Available
+                    <span>Scholarships.</span>
+                </h2>
+
+            </div>
+
+            <span id="scholarshipCount">
+                0 Opportunities
+            </span>
+
+        </div>
+
+
+        <!-- FILTERS -->
+
+        <div class="scholarship-filters">
+
+            <button
+                class="filter-btn active"
+                data-filter="all">
+                All
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="undergraduate">
+                Undergraduate
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="masters">
+                Master's
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="phd">
+                PhD
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="international">
+                International
+            </button>
+
+        </div>
+
+
+        <!-- SCHOLARSHIP GRID -->
+
+        <div
+            class="scholarships-grid"
+            id="scholarshipsGrid">
+
+            <!-- JavaScript loads scholarships -->
+
+        </div>
+
+    </div>
+
+</section>
+
+
+</main>
+
+
+<!-- FOOTER -->
+
+<footer class="footer">
+
+    <div class="section-container footer-grid">
+
+
+        <div class="footer-brand">
+
+            <a href="index.html"
+               class="logo">
+
+                <div class="logo-mark">
+
+                    <img
+                        src="logo.png"
+                        alt="Rwanda Opportunity Hub Logo">
+
+                </div>
+
+                <div class="logo-text">
+
+                    <span>Rwanda</span>
+
+                    <strong>
+                        Opportunity Hub
+                    </strong>
+
+                </div>
+
+            </a>
+
+            <p>
+                Connecting Rwanda with opportunities that help
+                people learn, grow and build better futures.
+            </p>
+
+        </div>
+
+
+        <div class="footer-column">
+
+            <h4>Explore</h4>
+
+            <a href="jobs.html">
+                Jobs
+            </a>
+
+            <a href="scholarships.html">
+                Scholarships
+            </a>
+
+            <a href="internships.html">
+                Internships
+            </a>
+
+            <a href="fellowships.html">
+                Fellowships
+            </a>
+
+            <a href="training.html">
+                Training
+            </a>
+
+        </div>
+
+
+        <div class="footer-column">
+
+            <h4>Platform</h4>
+
+            <a href="resources.html">
+                Resources
+            </a>
+
+            <a href="advertise.html">
+                Advertise With Us
+            </a>
+
+        </div>
+
+
+        <div class="footer-column">
+
+            <h4>Stay Updated</h4>
+
+            <p>
+                Get new opportunities delivered to you.
+            </p>
+
+            <form class="newsletter">
+
+                <input
+                    type="email"
+                    placeholder="Your email address">
+
+                <button type="submit">
+                    →
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer-bottom">
+
+        <div class="section-container">
+
+            <p>
+                © 2026 Rwanda Opportunity Hub.
+                All rights reserved.
+            </p>
+
+            <div class="footer-rwanda">
+                Made for Rwanda 🇷🇼
+            </div>
+
+        </div>
+
+    </div>
+
+</footer>
+
+<script src="js/main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+
+<script src="js/scholarships.js"></script>
+</body>
+
+</html>

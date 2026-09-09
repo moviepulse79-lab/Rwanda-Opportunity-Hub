@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Internships | Rwanda Opportunity Hub</title>
+
+    <link
+        rel="icon"
+        href="logo.png"
+        type="image/png"
+    >
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="css/internships.css"
+    >
+
+</head>
+
+
+<body data-page="internships">
+
+
+<!-- =========================================
+     NAVBAR
+========================================= -->
+
+<header class="navbar">
+
+    <div class="nav-container">
+
+
+        <a
+            href="index.html"
+            class="logo"
+        >
+
+            <div class="logo-mark">
+
+                <img
+                    src="logo.png"
+                    alt="Rwanda Opportunity Hub Logo"
+                >
+
+            </div>
+
+
+            <div class="logo-text">
+
+                <span>Rwanda</span>
+
+                <strong>
+                    Opportunity Hub
+                </strong>
+
+            </div>
+
+        </a>
+
+
+        <nav class="nav-links">
+
+            <a href="index.html">
+                Home
+            </a>
+
+            <a href="jobs.html">
+                Jobs
+            </a>
+
+            <a href="scholarships.html">
+                Scholarships
+            </a>
+
+            <a
+                href="internships.html"
+                class="active"
+            >
+                Internships
+            </a>
+
+            <a href="fellowships.html">
+                Fellowships
+            </a>
+
+            <a href="training.html">
+                Training
+            </a>
+
+        </nav>
+
+
+        <a
+            href="advertise.html"
+            class="nav-button"
+        >
+            Advertise With Us
+        </a>
+
+
+        <button
+            class="menu-toggle"
+            id="menuToggle"
+        >
+
+            <span></span>
+            <span></span>
+            <span></span>
+
+        </button>
+
+    </div>
+
+</header>
+
+
+<!-- =========================================
+     MOBILE MENU
+========================================= -->
+
+<div
+    class="mobile-menu"
+    id="mobileMenu"
+>
+
+    <a href="index.html">
+        Home
+    </a>
+
+    <a href="jobs.html">
+        Jobs
+    </a>
+
+    <a href="scholarships.html">
+        Scholarships
+    </a>
+
+    <a
+        href="internships.html"
+        class="active"
+    >
+        Internships
+    </a>
+
+    <a href="fellowships.html">
+        Fellowships
+    </a>
+
+    <a href="training.html">
+        Training
+    </a>
+
+    <a href="resources.html">
+        Resources
+    </a>
+
+    <a
+        href="advertise.html"
+        class="mobile-advertise"
+    >
+        Advertise With Us
+    </a>
+
+</div>
+
+
+
+<main>
+
+
+<!-- =========================================
+     INTERNSHIP HERO
+========================================= -->
+
+<section class="internship-hero">
+
+    <div class="section-container">
+
+
+        <span class="eyebrow">
+            CAREER EXPERIENCE
+        </span>
+
+
+        <h1>
+
+            Start Your
+            <span>Career.</span>
+
+        </h1>
+
+
+        <p>
+
+            Find internships that help you gain
+            real-world experience, build your skills
+            and prepare for your future career.
+
+        </p>
+
+
+        <div class="internship-search">
+
+            <input
+                type="text"
+                id="internshipSearch"
+                placeholder="Search internships..."
+            >
+
+
+            <button
+                type="button"
+            >
+
+                🔍 Search
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ADVERTISEMENT -->
+<div id="publicAdvertisement"></div>
+<!-- =========================================
+     INTERNSHIP LISTINGS
+========================================= -->
+
+<section class="internship-section">
+
+    <div class="section-container">
+
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="eyebrow">
+                    EXPLORE
+                </span>
+
+
+                <h2>
+
+                    Find Your
+                    <span>Internship.</span>
+
+                </h2>
+
+            </div>
+
+
+            <span id="internshipCount">
+                0 Opportunities
+            </span>
+
+        </div>
+
+
+
+        <!-- FILTERS -->
+
+        <div class="internship-filters">
+
+
+            <button
+                class="internship-filter active"
+                data-filter="all"
+            >
+                All
+            </button>
+
+
+            <button
+                class="internship-filter"
+                data-filter="software"
+            >
+                Software
+            </button>
+
+
+            <button
+                class="internship-filter"
+                data-filter="marketing"
+            >
+                Marketing
+            </button>
+
+
+            <button
+                class="internship-filter"
+                data-filter="finance"
+            >
+                Finance
+            </button>
+
+
+            <button
+                class="internship-filter"
+                data-filter="information technology"
+            >
+                IT
+            </button>
+
+        </div>
+
+
+
+        <!-- INTERNSHIP CARDS -->
+
+        <div
+            class="internships-grid"
+            id="internshipsGrid"
+        >
+
+            <!-- JavaScript loads internships -->
+
+        </div>
+
+    </div>
+
+</section>
+
+
+</main>
+
+<div class="load-more-container">
+    <button id="loadMoreInternships" class="load-more-btn">
+        Load More Internships
+    </button>
+</div>
+
+<!-- =========================================
+     FOOTER
+========================================= -->
+
+<footer class="footer">
+
+    <div class="section-container footer-grid">
+
+
+        <div class="footer-brand">
+
+            <a
+                href="index.html"
+                class="logo"
+            >
+
+                <div class="logo-mark">
+
+                    <img
+                        src="logo.png"
+                        alt="Rwanda Opportunity Hub Logo"
+                    >
+
+                </div>
+
+
+                <div class="logo-text">
+
+                    <span>Rwanda</span>
+
+                    <strong>
+                        Opportunity Hub
+                    </strong>
+
+                </div>
+
+            </a>
+
+
+            <p>
+
+                Connecting Rwanda with opportunities
+                that help people learn, grow and build
+                better futures.
+
+            </p>
+
+        </div>
+
+
+
+        <div class="footer-column">
+
+            <h4>
+                Explore
+            </h4>
+
+            <a href="jobs.html">
+                Jobs
+            </a>
+
+            <a href="scholarships.html">
+                Scholarships
+            </a>
+
+            <a href="internships.html">
+                Internships
+            </a>
+
+            <a href="fellowships.html">
+                Fellowships
+            </a>
+
+            <a href="training.html">
+                Training
+            </a>
+
+        </div>
+
+
+
+        <div class="footer-column">
+
+            <h4>
+                Platform
+            </h4>
+
+            <a href="resources.html">
+                Resources
+            </a>
+
+            <a href="advertise.html">
+                Advertise With Us
+            </a>
+
+        </div>
+
+
+
+        <div class="footer-column">
+
+            <h4>
+                Stay Updated
+            </h4>
+
+            <p>
+                Get new opportunities delivered to you.
+            </p>
+
+
+            <form class="newsletter">
+
+                <input
+                    type="email"
+                    placeholder="Your email address"
+                >
+
+                <button type="submit">
+                    →
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="footer-bottom">
+
+        <div class="section-container">
+
+            <p>
+                © 2026 Rwanda Opportunity Hub.
+                All rights reserved.
+            </p>
+
+
+            <div class="footer-rwanda">
+                Made for Rwanda 🇷🇼
+            </div>
+
+        </div>
+
+    </div>
+
+</footer>
+
+
+
+<!-- =========================================
+     SCRIPTS
+========================================= -->
+<script src="js/main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/ads.js"></script>
+<script src="js/internships.js"></script>
+
+
+</body>
+
+</html>

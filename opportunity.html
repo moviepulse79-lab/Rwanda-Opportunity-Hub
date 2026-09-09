@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Software Developer | Rwanda Opportunity Hub</title>
+
+    <meta
+        name="description"
+        content="View this verified opportunity on Rwanda Opportunity Hub."
+    >
+
+    <link rel="icon" href="logo.png" type="image/png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/opportunity.css">
+</head>
+
+<body>
+
+    <!-- =================================
+         NAVBAR
+    ================================== -->
+
+    <header class="navbar">
+
+        <div class="nav-container">
+
+            <a href="index.html" class="logo">
+
+                <div class="logo-mark">
+
+                    <img
+                        src="logo.png"
+                        alt="Rwanda Opportunity Hub Logo"
+                    >
+
+                </div>
+
+                <div class="logo-text">
+
+                    <span>Rwanda</span>
+
+                    <strong>
+                        Opportunity Hub
+                    </strong>
+
+                </div>
+
+            </a>
+
+
+            <nav class="nav-links">
+
+                <a href="index.html">
+                    Home
+                </a>
+
+                <a href="jobs.html" class="active">
+                    Jobs
+                </a>
+
+                <a href="scholarships.html">
+                    Scholarships
+                </a>
+
+                <a href="internships.html">
+                    Internships
+                </a>
+
+                <a href="fellowships.html">
+                    Fellowships
+                </a>
+
+                <a href="training.html">
+                    Training
+                </a>
+
+            </nav>
+
+
+            <a
+                href="advertise.html"
+                class="nav-button"
+            >
+                Advertise With Us
+            </a>
+
+
+            <button
+                class="menu-toggle"
+                id="menuToggle"
+                aria-label="Open menu"
+            >
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =================================
+         MOBILE MENU
+    ================================== -->
+
+    <div
+        class="mobile-menu"
+        id="mobileMenu"
+    >
+
+        <a href="index.html">
+            Home
+        </a>
+
+        <a
+            href="jobs.html"
+            class="active"
+        >
+            Jobs
+        </a>
+
+        <a href="scholarships.html">
+            Scholarships
+        </a>
+
+        <a href="internships.html">
+            Internships
+        </a>
+
+        <a href="fellowships.html">
+            Fellowships
+        </a>
+
+        <a href="training.html">
+            Training
+        </a>
+
+        <a href="resources.html">
+            Resources
+        </a>
+
+        <a
+            href="advertise.html"
+            class="mobile-advertise"
+        >
+            Advertise With Us
+        </a>
+
+    </div>
+
+
+    <!-- =================================
+         OPPORTUNITY HEADER
+    ================================== -->
+
+    <main>
+
+        <section class="opportunity-header">
+
+            <div class="section-container">
+
+                <div class="breadcrumb">
+
+                    <a href="jobs.html">
+                        Jobs
+                    </a>
+
+                    <span>/</span>
+
+                    <span>
+                        
+                    </span>
+
+                </div>
+
+
+                <div class="opportunity-heading">
+
+                    <div class="opportunity-title-area">
+
+                        <div class="large-company-logo">
+                            T
+                        </div>
+
+
+                        <div>
+
+                            <div class="title-badges">
+
+                                <span class="job-type-badge">
+                                    FULL TIME
+                                </span>
+
+                                <span class="verified-badge">
+                                    ✓ Verified Opportunity
+                                </span>
+
+                            </div>
+
+
+                            <h1>
+                                
+                            </h1>
+
+
+                            <p class="organization-name">
+                                
+                            </p>
+
+
+                            <div class="header-meta">
+
+                                <span>
+                                    
+                                </span>
+
+                                <span>
+                                    
+                                </span>
+
+                                <span>
+                                    
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        class="share-button"
+                        id="shareButton"
+                    >
+                        ↗ Share
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+        <!-- ADVERTISEMENT -->
+<div id="advertisementContainer"></div>
+
+
+        <!-- =================================
+             MAIN OPPORTUNITY CONTENT
+        ================================== -->
+
+        <section class="opportunity-section">
+
+            <div class="section-container opportunity-grid">
+
+
+          
+                 <section class="content-block" id="aboutOpportunityBlock">
+    <h2>About the Opportunity</h2>
+    <div id="aboutOpportunityContent">
+        <p>Loading job description...</p>
+    </div>
+</section>
+
+
+<section class="content-block" id="responsibilitiesBlock">
+    <h2>Responsibilities</h2>
+    <ul id="responsibilitiesList"></ul>
+</section>
+
+
+<section class="content-block" id="requirementsBlock">
+    <h2>Requirements</h2>
+    <ul id="requirementsList"></ul>
+</section>
+
+
+<section class="content-block" id="whatWeOfferBlock">
+    <h2>What We Offer</h2>
+    <ul id="whatWeOfferList"></ul>
+</section>
+
+                    <section class="content-block">
+
+                        <h2>
+                            How to Apply
+                        </h2>
+
+                        <p>
+                            Interested candidates should prepare an updated
+                            CV and submit their application through the
+                            organization's official application process.
+                        </p>
+
+                        <p class="application-note">
+
+                            Make sure your application is submitted before
+                            the deadline.
+
+                        </p>
+
+                    </section>
+
+
+                    <!-- SHARE -->
+
+                    <div class="content-share">
+
+                        <span>
+                            Share this opportunity
+                        </span>
+
+                        <button>
+                            WhatsApp
+                        </button>
+
+                        <button>
+                            Facebook
+                        </button>
+
+                        <button>
+                            LinkedIn
+                        </button>
+
+                    </div>
+
+                </article>
+
+
+                <!-- =================================
+                     SIDEBAR
+                ================================== -->
+
+                <aside class="opportunity-sidebar">
+
+
+                    <!-- APPLY CARD -->
+
+                    <div class="apply-card">
+
+                        <div class="deadline-warning">
+
+                            <span>
+                                APPLICATION DEADLINE
+                            </span>
+
+                            <strong>
+                                September 15, 2026
+                            </strong>
+
+                            <small>
+                                19 days remaining
+                            </small>
+
+                        </div>
+
+
+                        <a
+                            href="#"
+                            class="apply-button"
+                        >
+                            Apply Now →
+                        </a>
+
+
+                        <p class="apply-note">
+
+                            You will be redirected to the
+                            organization's official application page.
+
+                        </p>
+
+                    </div>
+
+
+                    <!-- QUICK INFO -->
+
+                    <div class="info-card">
+
+                        <h3>
+                            Opportunity Details
+                        </h3>
+
+
+                        <div class="info-item">
+
+                            <span>
+                                📍 Location
+                            </span>
+
+                            <strong>
+                                Kigali, Rwanda
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>
+                                💼 Job Type
+                            </span>
+
+                            <strong>
+                                Full Time
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>
+                                🎓 Experience
+                            </span>
+
+                            <strong>
+                                Entry Level
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>
+                                🏷 Category
+                            </span>
+
+                            <strong>
+                                Technology
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>
+                                📅 Posted
+                            </span>
+
+                            <strong>
+                                August 27, 2026
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span>
+                                ⏳ Deadline
+                            </span>
+
+                            <strong>
+                                September 15, 2026
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ORGANIZATION -->
+
+                    <div class="organization-card">
+
+                        <h3>
+                            About the Organization
+                        </h3>
+
+
+                        <div class="organization-profile">
+
+                            <div class="large-company-logo">
+                                T
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                  
+                                </strong>
+
+                              
+
+                            </div>
+
+                        </div>
+
+
+                        <p>
+                          
+                        </p>
+
+
+                        <a href="#">
+                            View Organization →
+                        </a>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================
+             RELATED OPPORTUNITIES
+        ================================== -->
+
+  <div class="related-grid" id="relatedGrid">
+</div>
+
+    </main>
+
+
+    <!-- =================================
+         FOOTER
+    ================================== -->
+
+    <footer class="footer">
+
+        <div class="section-container footer-grid">
+
+            <div class="footer-brand">
+
+                <a href="index.html" class="logo">
+
+                    <div class="logo-mark">
+
+                        <img
+                            src="logo.png"
+                            alt="Rwanda Opportunity Hub Logo"
+                        >
+
+                    </div>
+
+                    <div class="logo-text">
+
+                        <span>
+                            Rwanda
+                        </span>
+
+                        <strong>
+                            Opportunity Hub
+                        </strong>
+
+                    </div>
+
+                </a>
+
+
+                <p>
+                    Connecting Rwanda with opportunities that help people
+                    learn, grow and build better futures.
+                </p>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h4>
+                    Explore
+                </h4>
+
+                <a href="jobs.html">
+                    Jobs
+                </a>
+
+                <a href="scholarships.html">
+                    Scholarships
+                </a>
+
+                <a href="internships.html">
+                    Internships
+                </a>
+
+                <a href="fellowships.html">
+                    Fellowships
+                </a>
+
+                <a href="training.html">
+                    Training
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h4>
+                    Platform
+                </h4>
+
+                <a href="resources.html">
+                    Resources
+                </a>
+
+                <a href="advertise.html">
+                    Advertise With Us
+                </a>
+
+                <a href="#">
+                    About Us
+                </a>
+
+                <a href="#">
+                    Contact
+                </a>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h4>
+                    Stay Updated
+                </h4>
+
+                <p>
+                    Get new opportunities delivered to you.
+                </p>
+
+                <form class="newsletter">
+
+                    <input
+                        type="email"
+                        placeholder="Your email address"
+                    >
+
+                    <button type="submit">
+                        →
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            <div class="section-container">
+
+                <p>
+                    © 2026 Rwanda Opportunity Hub.
+                    All rights reserved.
+                </p>
+
+                <div class="footer-rwanda">
+                    Made for Rwanda 🇷🇼
+                </div>
+
+            </div>
+
+        </div>
+
+    </footer>
+
+<script src="js/main.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+<script src="js/ads.js"></script>
+
+<script src="js/opportunity.js"></script>
+
+</body>
+
+</html>
