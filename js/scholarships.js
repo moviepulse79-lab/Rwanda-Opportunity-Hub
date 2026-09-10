@@ -1,7 +1,16 @@
+
 // =========================================
 // ROH SCHOLARSHIPS
-// SUPABASE + LIVE OPEN SCHOLARSHIPS API
+// SUPABASE + OPEN SCHOLARSHIPS API + WORQNOW
 // =========================================
+//
+// IMPORTANT:
+// - Supabase records are NEVER modified.
+// - Your existing 12 scholarships remain untouched.
+// - API scholarships are displayed live only.
+// - API results are NOT inserted into Supabase.
+// =========================================
+
 
 const scholarshipsGrid =
     document.getElementById("scholarshipsGrid");
@@ -16,23 +25,30 @@ const filterButtons =
     document.querySelectorAll(".filter-btn");
 
 
-// =========================================
-// DATA
-// =========================================
-
 let scholarships = [];
 
 
 // =========================================
-// LIVE API
+// API SOURCES
 // =========================================
 
-const SCHOLARSHIP_API =
+const OPEN_SCHOLARSHIPS_API =
     "https://scholarships.grudged.io/api/scholarships?availability=open&limit=50";
 
 
+const WORQNOW_COUNTRIES = [
+    "uk",
+    "usa",
+    "ca",
+    "au",
+    "de",
+    "ie",
+    "nl"
+];
+
+
 // =========================================
-// LOAD SUPABASE SCHOLARSHIPS
+// LOAD SUPABASE
 // =========================================
 
 async function loadSupabaseScholarships() {
@@ -63,12 +79,24 @@ async function loadSupabaseScholarships() {
         }
 
 
-        return data || [];
+        return (data || []).map(
+            scholarship => ({
+
+                ...scholarship,
+
+                isApiScholarship: false,
+
+                source:
+                    "Supabase"
+
+            })
+        );
+
 
     } catch (error) {
 
         console.error(
-            "Supabase scholarships failed:",
+            "Supabase loading failed:",
             error
         );
 
@@ -80,23 +108,23 @@ async function loadSupabaseScholarships() {
 
 
 // =========================================
-// LOAD LIVE API SCHOLARSHIPS
+// LOAD OPEN SCHOLARSHIPS API
 // =========================================
 
-async function loadApiScholarships() {
+async function loadOpenScholarships() {
 
     try {
 
         const response =
             await fetch(
-                SCHOLARSHIP_API
+                OPEN_SCHOLARSHIPS_API
             );
 
 
         if (!response.ok) {
 
             throw new Error(
-                `Scholarship API error: ${response.status}`
+                `Open Scholarships API returned ${response.status}`
             );
 
         }
@@ -113,244 +141,21 @@ async function loadApiScholarships() {
 
 
         console.log(
-            "Live scholarship API:",
-            result
+            "Open Scholarships API:",
+            results.length,
+            "records"
         );
 
 
-        // =====================================
-        // FILTER API RESULTS
-        // =====================================
-
-        const usable =
-            results.filter(
-                scholarship => {
-
-                    const residency =
-                        scholarship
-                            .eligibility
-                            ?.residency || [];
-
-                    const citizenship =
-                        scholarship
-                            .eligibility
-                            ?.citizenship || [];
-
-                    const tags =
-                        scholarship
-                            .eligibility
-                            ?.tags || [];
-
-
-                    const residencyText =
-                        residency
-                            .join(" ")
-                            .toLowerCase();
-
-
-                    const citizenshipText =
-                        citizenship
-                            .join(" ")
-                            .toLowerCase();
-
-
-                    const tagsText =
-                        tags
-                            .join(" ")
-                            .toLowerCase();
-
-
-                    // Reject obvious US-only opportunities
-                    const usOnly =
-                        (
-                            residency.length > 0 &&
-                            residency.every(
-                                country =>
-                                    String(country)
-                                        .toLowerCase() === "us"
-                            )
-                        )
-                        ||
-                        (
-                            citizenship.length > 0 &&
-                            citizenship.every(
-                                country =>
-                                    String(country)
-                                        .toLowerCase() === "us"
-                            )
-                        );
-
-
-                    if (usOnly) {
-                        return false;
-                    }
-
-
-                    // Keep worldwide/international opportunities
-                    return (
-                        residencyText.includes("international") ||
-                        residencyText.includes("worldwide") ||
-                        residencyText.includes("global") ||
-                        tagsText.includes("international") ||
-                        tagsText.includes("worldwide") ||
-                        tagsText.includes("global") ||
-                        residency.length === 0
-                    );
-
-                }
-            );
-
-
-        // =====================================
-        // CONVERT API FORMAT TO ROH FORMAT
-        // =====================================
-
-        return usable.map(
-            scholarship => {
-
-                const educationLevels =
-                    scholarship
-                        .eligibility
-                        ?.education_level || [];
-
-
-                const residency =
-                    scholarship
-                        .eligibility
-                        ?.residency || [];
-
-
-                const otherEligibility =
-                    scholarship
-                        .eligibility
-                        ?.other || [];
-
-
-                const award =
-                    scholarship.award || {};
-
-
-                const deadline =
-                    scholarship.deadline || {};
-
-
-                const links =
-                    scholarship.links || {};
-
-
-                let level =
-                    educationLevels.length
-                        ? educationLevels.join(", ")
-                        : "See official details";
-
-
-                let location =
-                    residency.length
-                        ? residency.join(", ")
-                        : "International";
-
-
-                let awardText =
-                    "";
-
-
-                if (
-                    award.amount_max !== null &&
-                    award.amount_max !== undefined
-                ) {
-
-                    awardText =
-                        `${award.currency || ""} ${award.amount_max.toLocaleString()}`;
-
-                } else {
-
-                    awardText =
-                        "See official details";
-
-                }
-
-
-                let requirements =
-                    otherEligibility.length
-                        ? otherEligibility.join("\n")
-                        : "Check the official scholarship eligibility requirements.";
-
-
-                return {
-
-                    id:
-                        `api-${scholarship.id}`,
-
-                    title:
-                        scholarship.name ||
-                        "Scholarship Opportunity",
-
-                    organization:
-                        scholarship.sponsor ||
-                        "Unknown Organization",
-
-                    type:
-                        "scholarship",
-
-                    description:
-                        `Live scholarship opportunity from ${scholarship.sponsor || "the listed sponsor"}.`,
-
-                    requirements,
-
-                    deadline:
-                        deadline.date ||
-                        null,
-
-                    link:
-                        links.apply_url ||
-                        links.info_url ||
-                        "#",
-
-                    location,
-
-                    category:
-                        "international",
-
-                    duration:
-                        null,
-
-                    level,
-
-                    posted:
-                        scholarship.provenance
-                            ?.last_verified ||
-                        null,
-
-                    funding:
-                        awardText,
-
-                    isApiScholarship:
-                        true,
-
-                    apiId:
-                        scholarship.id,
-
-                    sourceUrl:
-                        links.info_url ||
-                        scholarship.provenance
-                            ?.source_url ||
-                        "",
-
-                    availability:
-                        scholarship.availability ||
-                        scholarship.status ||
-                        "active"
-
-                };
-
-            }
-        );
+        return results
+            .filter(isUsefulOpenScholarship)
+            .map(normalizeOpenScholarship);
 
 
     } catch (error) {
 
-        console.error(
-            "Live scholarship API failed:",
+        console.warn(
+            "Open Scholarships API unavailable:",
             error
         );
 
@@ -362,7 +167,649 @@ async function loadApiScholarships() {
 
 
 // =========================================
-// LOAD EVERYTHING
+// FILTER OPEN SCHOLARSHIPS
+// =========================================
+
+function isUsefulOpenScholarship(
+    scholarship
+) {
+
+    if (!scholarship) {
+        return false;
+    }
+
+
+    const eligibility =
+        scholarship.eligibility || {};
+
+
+    const residency =
+        Array.isArray(
+            eligibility.residency
+        )
+            ? eligibility.residency
+            : [];
+
+
+    const citizenship =
+        Array.isArray(
+            eligibility.citizenship
+        )
+            ? eligibility.citizenship
+            : [];
+
+
+    const residencyText =
+        residency
+            .join(" ")
+            .toLowerCase();
+
+
+    const citizenshipText =
+        citizenship
+            .join(" ")
+            .toLowerCase();
+
+
+    /*
+     * We do NOT automatically throw away
+     * every US record here.
+     *
+     * The API is currently US-heavy, but
+     * some records may have broader eligibility.
+     */
+
+
+    const clearlyUSOnly =
+
+        residency.length > 0 &&
+        residency.every(
+            country => {
+
+                const value =
+                    String(country)
+                        .toLowerCase()
+                        .trim();
+
+                return (
+                    value === "us" ||
+                    value === "usa" ||
+                    value === "united states"
+                );
+
+            }
+        );
+
+
+    const clearlyUSCitizensOnly =
+
+        citizenship.length > 0 &&
+        citizenship.every(
+            country => {
+
+                const value =
+                    String(country)
+                        .toLowerCase()
+                        .trim();
+
+                return (
+                    value === "us" ||
+                    value === "usa" ||
+                    value === "united states"
+                );
+
+            }
+        );
+
+
+    /*
+     * Keep records that are not explicitly
+     * US-residency/citizenship restricted.
+     */
+
+    if (
+        clearlyUSOnly ||
+        clearlyUSCitizensOnly
+    ) {
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
+
+
+// =========================================
+// NORMALIZE OPEN SCHOLARSHIP
+// =========================================
+
+function normalizeOpenScholarship(
+    scholarship
+) {
+
+    const eligibility =
+        scholarship.eligibility || {};
+
+    const award =
+        scholarship.award || {};
+
+    const links =
+        scholarship.links || {};
+
+
+    const educationLevels =
+        Array.isArray(
+            eligibility.education_level
+        )
+            ? eligibility.education_level
+            : [];
+
+
+    const residency =
+        Array.isArray(
+            eligibility.residency
+        )
+            ? eligibility.residency
+            : [];
+
+
+    const other =
+        Array.isArray(
+            eligibility.other
+        )
+            ? eligibility.other
+            : [];
+
+
+    let funding =
+        "See official details";
+
+
+    if (
+        award.amount_max !== null &&
+        award.amount_max !== undefined
+    ) {
+
+        const amount =
+            Number(
+                award.amount_max
+            );
+
+
+        if (!Number.isNaN(amount)) {
+
+            funding =
+                `${award.currency || "USD"} ${amount.toLocaleString()}`;
+
+        }
+
+    }
+
+
+    return {
+
+        id:
+            `open-${scholarship.id}`,
+
+        title:
+            scholarship.name ||
+            "Live Scholarship Opportunity",
+
+        organization:
+            scholarship.sponsor ||
+            "Listed Scholarship Sponsor",
+
+        type:
+            "scholarship",
+
+        description:
+            `Live scholarship opportunity from ${
+                scholarship.sponsor ||
+                "the listed sponsor"
+            }.`,
+
+        requirements:
+            other.length
+                ? other.join("\n")
+                : "Check the official scholarship eligibility requirements.",
+
+        deadline:
+            scholarship.deadline?.date ||
+            scholarship.deadline ||
+            null,
+
+        link:
+            links.apply_url ||
+            links.info_url ||
+            "#",
+
+        location:
+            residency.length
+                ? residency.join(", ")
+                : "International",
+
+        category:
+            "international",
+
+        level:
+            educationLevels.length
+                ? educationLevels.join(", ")
+                : "See official details",
+
+        funding,
+
+        posted:
+            scholarship.provenance
+                ?.last_verified ||
+            null,
+
+        isApiScholarship:
+            true,
+
+        source:
+            "Open Scholarships",
+
+        apiSource:
+            "open-scholarships"
+
+    };
+
+}
+
+
+// =========================================
+// LOAD WORQNOW
+// =========================================
+
+async function loadWorqNowScholarships() {
+
+    const allResults = [];
+
+
+    for (
+        const country
+        of WORQNOW_COUNTRIES
+    ) {
+
+        try {
+
+            const url =
+                `https://api.worqnow.ai/education/${country}/scholarships`;
+
+
+            const response =
+                await fetch(url);
+
+
+            if (!response.ok) {
+
+                console.warn(
+                    `WorqNow ${country}: HTTP ${response.status}`
+                );
+
+                continue;
+
+            }
+
+
+            const result =
+                await response.json();
+
+
+            console.log(
+                `WorqNow ${country}:`,
+                result
+            );
+
+
+            const records =
+                extractWorqNowRecords(
+                    result
+                );
+
+
+            records.forEach(
+                scholarship => {
+
+                    allResults.push(
+                        normalizeWorqNowScholarship(
+                            scholarship,
+                            country
+                        )
+                    );
+
+                }
+            );
+
+
+        } catch (error) {
+
+            console.warn(
+                `WorqNow ${country} unavailable:`,
+                error
+            );
+
+        }
+
+    }
+
+
+    return deduplicateApiScholarships(
+        allResults
+    );
+
+}
+
+
+// =========================================
+// EXTRACT WORQNOW RECORDS
+// =========================================
+
+function extractWorqNowRecords(
+    result
+) {
+
+    if (
+        Array.isArray(result)
+    ) {
+
+        return result;
+
+    }
+
+
+    if (
+        Array.isArray(
+            result.data
+        )
+    ) {
+
+        return result.data;
+
+    }
+
+
+    if (
+        Array.isArray(
+            result.results
+        )
+    ) {
+
+        return result.results;
+
+    }
+
+
+    if (
+        Array.isArray(
+            result.scholarships
+        )
+    ) {
+
+        return result.scholarships;
+
+    }
+
+
+    return [];
+
+}
+
+
+// =========================================
+// NORMALIZE WORQNOW
+// =========================================
+
+function normalizeWorqNowScholarship(
+    scholarship,
+    country
+) {
+
+    const title =
+
+        scholarship.title ||
+        scholarship.name ||
+        scholarship.scholarship_name ||
+        "International Scholarship";
+
+
+    const organization =
+
+        scholarship.organization ||
+        scholarship.provider ||
+        scholarship.university ||
+        scholarship.institution ||
+        scholarship.sponsor ||
+        "International Institution";
+
+
+    const description =
+
+        scholarship.description ||
+        scholarship.summary ||
+        scholarship.details ||
+        "See the official scholarship information.";
+
+
+    const deadline =
+
+        scholarship.deadline ||
+        scholarship.close_date ||
+        scholarship.closing_date ||
+        scholarship.application_deadline ||
+        null;
+
+
+    const link =
+
+        scholarship.apply_url ||
+        scholarship.application_url ||
+        scholarship.url ||
+        scholarship.link ||
+        scholarship.website ||
+        "#";
+
+
+    const level =
+
+        scholarship.level ||
+        scholarship.degree ||
+        scholarship.degree_level ||
+        scholarship.study_level ||
+        "See official details";
+
+
+    const funding =
+
+        scholarship.funding ||
+        scholarship.amount ||
+        scholarship.award ||
+        scholarship.value ||
+        "See official details";
+
+
+    const location =
+
+        scholarship.location ||
+        scholarship.country ||
+        countryName(country);
+
+
+    const requirements =
+
+        scholarship.requirements ||
+        scholarship.eligibility ||
+        "Check the official scholarship eligibility requirements.";
+
+
+    return {
+
+        id:
+            `worqnow-${country}-${slugify(title)}`,
+
+        title,
+
+        organization,
+
+        type:
+            "scholarship",
+
+        description,
+
+        requirements:
+
+            Array.isArray(requirements)
+                ? requirements.join("\n")
+                : String(requirements),
+
+        deadline,
+
+        link,
+
+        location,
+
+        category:
+            "international",
+
+        level,
+
+        funding:
+
+            Array.isArray(funding)
+                ? funding.join(", ")
+                : String(funding),
+
+        posted:
+            scholarship.posted ||
+            scholarship.created_at ||
+            null,
+
+        isApiScholarship:
+            true,
+
+        source:
+            "WorqNow",
+
+        apiSource:
+            "worqnow"
+
+    };
+
+}
+
+
+// =========================================
+// COUNTRY NAME
+// =========================================
+
+function countryName(
+    country
+) {
+
+    const names = {
+
+        uk:
+            "United Kingdom",
+
+        usa:
+            "United States",
+
+        ca:
+            "Canada",
+
+        au:
+            "Australia",
+
+        de:
+            "Germany",
+
+        ie:
+            "Ireland",
+
+        nl:
+            "Netherlands"
+
+    };
+
+
+    return (
+        names[country] ||
+        "International"
+    );
+
+}
+
+
+// =========================================
+// SLUGIFY
+// =========================================
+
+function slugify(
+    value
+) {
+
+    return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .substring(0, 80);
+
+}
+
+
+// =========================================
+// DEDUPLICATE API RESULTS
+// =========================================
+
+function deduplicateApiScholarships(
+    list
+) {
+
+    const seen =
+        new Set();
+
+    return list.filter(
+        scholarship => {
+
+            const key =
+
+                `${String(
+                    scholarship.title
+                )
+                    .toLowerCase()
+                    .trim()
+                }|${String(
+                    scholarship.organization
+                )
+                    .toLowerCase()
+                    .trim()
+                }`;
+
+
+            if (
+                seen.has(key)
+            ) {
+
+                return false;
+
+            }
+
+
+            seen.add(key);
+
+            return true;
+
+        }
+    );
+
+}
+
+
+// =========================================
+// LOAD ALL SOURCES
 // =========================================
 
 async function loadScholarships() {
@@ -373,52 +820,94 @@ async function loadScholarships() {
 
 
     scholarshipsGrid.innerHTML = `
+
         <div class="no-results">
-            <h3>Loading scholarships...</h3>
-            <p>Checking available opportunities.</p>
+
+            <h3>
+                Loading scholarships...
+            </h3>
+
+            <p>
+                Checking verified and live opportunities.
+            </p>
+
         </div>
+
     `;
 
 
     try {
 
         const [
+
             supabaseScholarships,
-            apiScholarships
+
+            openScholarships,
+
+            worqNowScholarships
+
         ] = await Promise.all([
 
             loadSupabaseScholarships(),
 
-            loadApiScholarships()
+            loadOpenScholarships(),
+
+            loadWorqNowScholarships()
 
         ]);
 
 
         // =====================================
-        // COMBINE BOTH SOURCES
+        // COMBINE WITHOUT MODIFYING SUPABASE
         // =====================================
 
         scholarships = [
+
             ...supabaseScholarships,
-            ...apiScholarships
+
+            ...openScholarships,
+
+            ...worqNowScholarships
+
         ];
 
 
         console.log(
-            "Supabase scholarships:",
+            "================================="
+        );
+
+
+        console.log(
+            "ROH SCHOLARSHIP SOURCES"
+        );
+
+
+        console.log(
+            "Supabase:",
             supabaseScholarships.length
         );
 
 
         console.log(
-            "Live API scholarships:",
-            apiScholarships.length
+            "Open Scholarships:",
+            openScholarships.length
         );
 
 
         console.log(
-            "Total scholarships:",
+            "WorqNow:",
+            worqNowScholarships.length
+        );
+
+
+        console.log(
+            "TOTAL:",
             scholarships.length
+        );
+
+
+        console.log(
+            "================================="
         );
 
 
@@ -435,12 +924,20 @@ async function loadScholarships() {
         );
 
 
-        scholarshipsGrid.innerHTML = `
-            <div class="no-results">
-                <h3>Unable to load scholarships</h3>
-                <p>Please try again later.</p>
-            </div>
-        `;
+        // Even if APIs fail,
+        // try to keep Supabase visible.
+
+        const fallback =
+            await loadSupabaseScholarships();
+
+
+        scholarships =
+            fallback;
+
+
+        displayScholarships(
+            scholarships
+        );
 
     }
 
@@ -448,10 +945,12 @@ async function loadScholarships() {
 
 
 // =========================================
-// DISPLAY SCHOLARSHIPS
+// DISPLAY
 // =========================================
 
-function displayScholarships(list) {
+function displayScholarships(
+    list
+) {
 
     if (!scholarshipsGrid) {
         return;
@@ -464,12 +963,19 @@ function displayScholarships(list) {
     if (!list.length) {
 
         scholarshipsGrid.innerHTML = `
+
             <div class="no-results">
-                <h3>No scholarships found</h3>
+
+                <h3>
+                    No scholarships found
+                </h3>
+
                 <p>
                     Try another search or filter.
                 </p>
+
             </div>
+
         `;
 
 
@@ -500,21 +1006,36 @@ function displayScholarships(list) {
 
 
             // =================================
-            // API / MANUAL BADGE
+            // SOURCE BADGE
             // =================================
 
-            const sourceBadge =
-                scholarship.isApiScholarship
-                    ? `
-                        <span class="verified-badge">
-                            🌐 Live
-                        </span>
-                    `
-                    : `
-                        <span class="verified-badge">
-                            ✓ Verified
-                        </span>
-                    `;
+            let sourceBadge = "";
+
+
+            if (
+                scholarship.source ===
+                "Supabase"
+            ) {
+
+                sourceBadge = `
+
+                    <span class="verified-badge">
+                        ✓ Verified
+                    </span>
+
+                `;
+
+            } else {
+
+                sourceBadge = `
+
+                    <span class="verified-badge">
+                        🌐 Live
+                    </span>
+
+                `;
+
+            }
 
 
             // =================================
@@ -522,10 +1043,13 @@ function displayScholarships(list) {
             // =================================
 
             const deadlineText =
+
                 scholarship.deadline
+
                     ? formatDeadline(
                         scholarship.deadline
                     )
+
                     : "No deadline specified";
 
 
@@ -534,8 +1058,53 @@ function displayScholarships(list) {
             // =================================
 
             const funding =
+
                 scholarship.funding ||
                 "Scholarship";
+
+
+            // =================================
+            // DETAILS LINK
+            // =================================
+
+            let detailsUrl = "";
+
+
+            if (
+                scholarship.isApiScholarship
+            ) {
+
+                /*
+                 * IMPORTANT:
+                 *
+                 * API scholarships currently use
+                 * apiScholarship instead of pretending
+                 * their ID exists in Supabase.
+                 *
+                 * opportunity.js must support this
+                 * parameter.
+                 */
+
+                detailsUrl =
+
+                    `opportunity.html?apiScholarship=${encodeURIComponent(
+                        scholarship.apiSource +
+                        "|" +
+                        (
+                            scholarship.apiId ||
+                            scholarship.id
+                        )
+                    )}&type=scholarship`;
+
+            } else {
+
+                detailsUrl =
+
+                    `opportunity.html?id=${encodeURIComponent(
+                        scholarship.id
+                    )}&type=scholarship`;
+
+            }
 
 
             card.innerHTML = `
@@ -559,37 +1128,45 @@ function displayScholarships(list) {
 
 
                 <p class="scholarship-organization">
+
                     ${escapeHtml(
                         scholarship.organization
                     )}
+
                 </p>
 
 
                 <div class="scholarship-meta">
 
                     <span>
+
                         🎓
                         ${escapeHtml(
                             scholarship.level ||
                             "All Levels"
                         )}
+
                     </span>
 
 
                     <span>
+
                         📍
                         ${escapeHtml(
                             scholarship.location ||
                             "International"
                         )}
+
                     </span>
 
 
                     <span>
+
                         💰
                         ${escapeHtml(
                             funding
                         )}
+
                     </span>
 
                 </div>
@@ -608,9 +1185,7 @@ function displayScholarships(list) {
 
 
                     <a
-                        href="opportunity.html?id=${encodeURIComponent(
-                            scholarship.id
-                        )}&type=scholarship"
+                        href="${detailsUrl}"
                     >
                         View Details →
                     </a>
@@ -639,13 +1214,17 @@ function displayScholarships(list) {
 
 
 // =========================================
-// FORMAT DEADLINE
+// DATE FORMAT
 // =========================================
 
-function formatDeadline(date) {
+function formatDeadline(
+    date
+) {
 
     if (!date) {
+
         return "No deadline specified";
+
     }
 
 
@@ -667,9 +1246,16 @@ function formatDeadline(date) {
     return parsed.toLocaleDateString(
         "en-US",
         {
-            year: "numeric",
-            month: "long",
-            day: "numeric"
+
+            year:
+                "numeric",
+
+            month:
+                "long",
+
+            day:
+                "numeric"
+
         }
     );
 
@@ -677,101 +1263,146 @@ function formatDeadline(date) {
 
 
 // =========================================
-// ESCAPE HTML
+// HTML ESCAPE
 // =========================================
 
-function escapeHtml(value) {
+function escapeHtml(
+    value
+) {
 
-    return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(
+        value || ""
+    )
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
 
 
 // =========================================
-// FILTER SCHOLARSHIPS
+// FILTER
 // =========================================
 
 function filterScholarships() {
 
     const searchTerm =
+
         searchInput
+
             ? searchInput.value
                 .toLowerCase()
                 .trim()
+
             : "";
 
 
     const activeFilter =
+
         document
             .querySelector(
                 ".filter-btn.active"
             )
             ?.dataset.filter ||
+
         "all";
 
 
     const filtered =
+
         scholarships.filter(
             scholarship => {
 
                 const title =
+
                     scholarship.title
                         ?.toLowerCase() ||
                     "";
 
 
                 const organization =
+
                     scholarship.organization
                         ?.toLowerCase() ||
                     "";
 
 
                 const location =
+
                     scholarship.location
                         ?.toLowerCase() ||
                     "";
 
 
                 const level =
+
                     scholarship.level
                         ?.toLowerCase() ||
                     "";
 
 
                 const category =
+
                     scholarship.category
                         ?.toLowerCase() ||
                     "";
 
 
                 const description =
+
                     scholarship.description
                         ?.toLowerCase() ||
                     "";
 
 
                 const matchesSearch =
+
                     title.includes(
                         searchTerm
                     )
+
                     ||
+
                     organization.includes(
                         searchTerm
                     )
+
                     ||
+
                     location.includes(
                         searchTerm
                     )
+
                     ||
+
                     level.includes(
                         searchTerm
                     )
+
                     ||
+
                     description.includes(
                         searchTerm
                     );
@@ -791,10 +1422,13 @@ function filterScholarships() {
                 ) {
 
                     matchesFilter =
+
                         category.includes(
                             "international"
                         )
+
                         ||
+
                         (
                             location &&
                             !location.includes(
@@ -815,6 +1449,7 @@ function filterScholarships() {
                 ) {
 
                     matchesFilter =
+
                         level.includes(
                             activeFilter
                         );
@@ -823,8 +1458,10 @@ function filterScholarships() {
 
 
                 return (
+
                     matchesSearch &&
                     matchesFilter
+
                 );
 
             }
@@ -893,3 +1530,4 @@ filterButtons.forEach(
 // =========================================
 
 loadScholarships();
+
