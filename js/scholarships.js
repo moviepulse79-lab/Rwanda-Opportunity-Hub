@@ -30,8 +30,6 @@ const searchInput =
 
 const filterButtons =
     document.querySelectorAll(".filter-btn");
-
-
 // =========================================
 // STATE
 // =========================================
@@ -2611,26 +2609,7 @@ if (
 }
 
 
-// =========================================
-// SEARCH BUTTON
-// =========================================
 
-const searchButton =
-    document.getElementById(
-        "searchButton"
-    );
-
-
-if (
-    searchButton
-) {
-
-    searchButton.addEventListener(
-        "click",
-        filterScholarships
-    );
-
-}
 
 
 // =========================================
