@@ -1070,41 +1070,28 @@ function displayScholarships(
             let detailsUrl = "";
 
 
-            if (
-                scholarship.isApiScholarship
-            ) {
+       if (scholarship.isApiScholarship) {
 
-                /*
-                 * IMPORTANT:
-                 *
-                 * API scholarships currently use
-                 * apiScholarship instead of pretending
-                 * their ID exists in Supabase.
-                 *
-                 * opportunity.js must support this
-                 * parameter.
-                 */
+    const storageKey =
+        `roh-scholarship-${scholarship.id}`;
 
-                detailsUrl =
+    sessionStorage.setItem(
+        storageKey,
+        JSON.stringify(scholarship)
+    );
 
-                    `opportunity.html?apiScholarship=${encodeURIComponent(
-                        scholarship.apiSource +
-                        "|" +
-                        (
-                            scholarship.apiId ||
-                            scholarship.id
-                        )
-                    )}&type=scholarship`;
+    detailsUrl =
+        `opportunity.html?apiScholarship=${encodeURIComponent(
+            storageKey
+        )}&type=scholarship`;
 
-            } else {
+} else {
 
-                detailsUrl =
-
-                    `opportunity.html?id=${encodeURIComponent(
-                        scholarship.id
-                    )}&type=scholarship`;
-
-            }
+    detailsUrl =
+        `opportunity.html?id=${encodeURIComponent(
+            scholarship.id
+        )}&type=scholarship`;
+} 
 
 
             card.innerHTML = `
