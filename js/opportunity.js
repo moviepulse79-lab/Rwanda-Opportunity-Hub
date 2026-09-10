@@ -8,11 +8,12 @@ const apiScholarship = params.get("apiScholarship");
 const id = params.get("id");
 const requestedType = params.get("type");
 
-    console.log("Opportunity:", {
-        apiJob,
-        id,
-        requestedType
-    });
+   console.log("Opportunity:", {
+    apiJob,
+    apiScholarship,
+    id,
+    requestedType
+});
 
 
     // ==========================================
@@ -1711,3 +1712,4 @@ function loadApiScholarship() {
     );
 
 }
+});
