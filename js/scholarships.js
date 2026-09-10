@@ -1,16 +1,23 @@
 
 // =========================================
 // ROH SCHOLARSHIPS
-// SUPABASE + OPEN SCHOLARSHIPS API + WORQNOW
+// SUPABASE + OPPORTUNITIES FOR AFRICANS
 // =========================================
 //
 // IMPORTANT:
 // - Supabase records are NEVER modified.
-// - Your existing 12 scholarships remain untouched.
-// - API scholarships are displayed live only.
-// - API results are NOT inserted into Supabase.
+// - Existing Supabase scholarships remain untouched.
+// - OFA scholarships are displayed live only.
+// - OFA results are NOT inserted into Supabase.
+// - Fellowships are NOT included here.
+// - Expired opportunities are rejected.
+// - Only scholarship-category posts are accepted.
 // =========================================
 
+
+// =========================================
+// ELEMENTS
+// =========================================
 
 const scholarshipsGrid =
     document.getElementById("scholarshipsGrid");
@@ -25,26 +32,52 @@ const filterButtons =
     document.querySelectorAll(".filter-btn");
 
 
+// =========================================
+// STATE
+// =========================================
+
 let scholarships = [];
 
+let filteredScholarships = [];
+
+let visibleScholarships = 12;
+
+const LOAD_MORE_COUNT = 12;
+
 
 // =========================================
-// API SOURCES
+// OFA SOURCE
+// =========================================
+//
+// Opportunities For Africans
+//
+// We search Rwanda-related posts through
+// the WordPress REST API and then keep only
+// posts belonging to the Scholarships category.
+//
 // =========================================
 
-const OPEN_SCHOLARSHIPS_API =
-    "https://scholarships.grudged.io/api/scholarships?availability=open&limit=50";
+const OFA_API =
+    "https://www.opportunitiesforafricans.com/wp-json/wp/v2/posts";
+
+const OFA_SEARCH_TERM =
+    "rwanda";
+
+const OFA_SOURCE_URL =
+    "https://www.opportunitiesforafricans.com/?s=rwanda";
 
 
-const WORQNOW_COUNTRIES = [
-    "uk",
-    "usa",
-    "ca",
-    "au",
-    "de",
-    "ie",
-    "nl"
-];
+// =========================================
+// CURRENT DATE
+// =========================================
+
+function todayISO() {
+
+    const now = new Date();
+
+    return now.toISOString().split("T")[0];
+
+}
 
 
 // =========================================
@@ -59,12 +92,22 @@ async function loadSupabaseScholarships() {
             data,
             error
         } = await supabaseClient
+
             .from("opportunities")
+
             .select("*")
-            .eq("type", "scholarship")
-            .order("created_at", {
-                ascending: false
-            });
+
+            .eq(
+                "type",
+                "scholarship"
+            )
+
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
 
 
         if (error) {
@@ -79,17 +122,25 @@ async function loadSupabaseScholarships() {
         }
 
 
-        return (data || []).map(
+        return (
+            data || []
+        ).map(
+
             scholarship => ({
 
                 ...scholarship,
 
-                isApiScholarship: false,
+                isApiScholarship:
+                    false,
+
+                isApiJob:
+                    false,
 
                 source:
                     "Supabase"
 
             })
+
         );
 
 
@@ -106,82 +157,108 @@ async function loadSupabaseScholarships() {
 
 }
 
+
 // =========================================
-// LOAD OPEN SCHOLARSHIPS API
+// LOAD OFA
 // =========================================
 
-async function loadOpenScholarships() {
+async function loadOFAScholarships() {
 
     try {
 
+        const url =
+            `${OFA_API}?search=${encodeURIComponent(
+                OFA_SEARCH_TERM
+            )}&per_page=100&_embed`;
+
+
         const response =
             await fetch(
-                OPEN_SCHOLARSHIPS_API
+                url,
+                {
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
             );
 
 
         if (!response.ok) {
 
             throw new Error(
-                `Open Scholarships API returned ${response.status}`
+                `OFA API returned HTTP ${response.status}`
             );
 
         }
 
 
-        const result =
+        const posts =
             await response.json();
 
 
-        const results =
-            Array.isArray(result.results)
-                ? result.results
-                : [];
+        if (!Array.isArray(posts)) {
+
+            return [];
+
+        }
 
 
         console.log(
-            "Open Scholarships API:",
-            results.length,
-            "raw records"
+            "OFA raw posts:",
+            posts.length
         );
 
 
-        const normalized =
-            results
-                .filter(
-                    isUsefulOpenScholarship
-                )
-                .map(
-                    normalizeOpenScholarship
+        const results = [];
+
+
+        for (
+            const post of posts
+        ) {
+
+            try {
+
+                const scholarship =
+                    await normalizeOFAPost(
+                        post
+                    );
+
+
+                if (
+                    scholarship &&
+                    isValidLiveScholarship(
+                        scholarship
+                    )
+                ) {
+
+                    results.push(
+                        scholarship
+                    );
+
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "Could not process OFA post:",
+                    error
                 );
 
+            }
 
-        const valid =
-            normalized.filter(
-                isValidLiveScholarship
-            );
+        }
 
 
-        console.log(
-            "Open Scholarships API:",
-            valid.length,
-            "valid current scholarships"
+        return deduplicateScholarships(
+            results
         );
-
-
-        console.log(
-            "Open Scholarships API rejected:",
-            normalized.length - valid.length
-        );
-
-
-        return valid;
 
 
     } catch (error) {
 
         console.warn(
-            "Open Scholarships API unavailable:",
+            "OFA scholarships unavailable:",
             error
         );
 
@@ -192,523 +269,246 @@ async function loadOpenScholarships() {
 }
 
 
-
-
-
 // =========================================
-// FILTER OPEN SCHOLARSHIPS
+// NORMALIZE OFA POST
 // =========================================
 
-function isUsefulOpenScholarship(
-    scholarship
+async function normalizeOFAPost(
+    post
 ) {
 
-    if (!scholarship) {
-        return false;
-    }
+    if (!post) {
 
-
-    const eligibility =
-        scholarship.eligibility || {};
-
-
-    const residency =
-        Array.isArray(
-            eligibility.residency
-        )
-            ? eligibility.residency
-            : [];
-
-
-    const citizenship =
-        Array.isArray(
-            eligibility.citizenship
-        )
-            ? eligibility.citizenship
-            : [];
-
-
-    const residencyText =
-        residency
-            .join(" ")
-            .toLowerCase();
-
-
-    const citizenshipText =
-        citizenship
-            .join(" ")
-            .toLowerCase();
-
-
-    /*
-     * We do NOT automatically throw away
-     * every US record here.
-     *
-     * The API is currently US-heavy, but
-     * some records may have broader eligibility.
-     */
-
-
-    const clearlyUSOnly =
-
-        residency.length > 0 &&
-        residency.every(
-            country => {
-
-                const value =
-                    String(country)
-                        .toLowerCase()
-                        .trim();
-
-                return (
-                    value === "us" ||
-                    value === "usa" ||
-                    value === "united states"
-                );
-
-            }
-        );
-
-
-    const clearlyUSCitizensOnly =
-
-        citizenship.length > 0 &&
-        citizenship.every(
-            country => {
-
-                const value =
-                    String(country)
-                        .toLowerCase()
-                        .trim();
-
-                return (
-                    value === "us" ||
-                    value === "usa" ||
-                    value === "united states"
-                );
-
-            }
-        );
-
-
-    /*
-     * Keep records that are not explicitly
-     * US-residency/citizenship restricted.
-     */
-
-    if (
-        clearlyUSOnly ||
-        clearlyUSCitizensOnly
-    ) {
-
-        return false;
+        return null;
 
     }
 
-
-    return true;
-
-}
-
-
-// =========================================
-// NORMALIZE OPEN SCHOLARSHIP
-// =========================================
-
-function normalizeOpenScholarship(
-    scholarship
-) {
-
-    const eligibility =
-        scholarship.eligibility || {};
-
-    const award =
-        scholarship.award || {};
-
-    const links =
-        scholarship.links || {};
-
-
-    const educationLevels =
-        Array.isArray(
-            eligibility.education_level
-        )
-            ? eligibility.education_level
-            : [];
-
-
-    const residency =
-        Array.isArray(
-            eligibility.residency
-        )
-            ? eligibility.residency
-            : [];
-
-
-    const other =
-        Array.isArray(
-            eligibility.other
-        )
-            ? eligibility.other
-            : [];
-
-
-    let funding =
-        "See official details";
-
-
-    if (
-        award.amount_max !== null &&
-        award.amount_max !== undefined
-    ) {
-
-        const amount =
-            Number(
-                award.amount_max
-            );
-
-
-        if (!Number.isNaN(amount)) {
-
-            funding =
-                `${award.currency || "USD"} ${amount.toLocaleString()}`;
-
-        }
-
-    }
-
-
-    return {
-
-        id:
-            `open-${scholarship.id}`,
-
-        title:
-            scholarship.name ||
-            "Live Scholarship Opportunity",
-
-        organization:
-            scholarship.sponsor ||
-            "Listed Scholarship Sponsor",
-
-        type:
-            "scholarship",
-
-        description:
-            `Live scholarship opportunity from ${
-                scholarship.sponsor ||
-                "the listed sponsor"
-            }.`,
-
-        requirements:
-            other.length
-                ? other.join("\n")
-                : "Check the official scholarship eligibility requirements.",
-
-        deadline:
-            scholarship.deadline?.date ||
-            scholarship.deadline ||
-            null,
-
-       link:
-    links.apply_url ||
-    null,
-
-        location:
-            residency.length
-                ? residency.join(", ")
-                : "International",
-
-        category:
-            "international",
-
-        level:
-            educationLevels.length
-                ? educationLevels.join(", ")
-                : "See official details",
-
-        funding,
-
-        posted:
-            scholarship.provenance
-                ?.last_verified ||
-            null,
-
-        isApiScholarship:
-            true,
-
-        source:
-            "Open Scholarships",
-
-        apiSource:
-            "open-scholarships"
-
-    };
-
-}
-
-
-// =========================================
-// LOAD WORQNOW
-// =========================================
-
-async function loadWorqNowScholarships() {
-
-    const allResults = [];
-
-
-    for (
-        const country
-        of WORQNOW_COUNTRIES
-    ) {
-
-        try {
-
-            const url =
-                `https://api.worqnow.ai/education/${country}/scholarships`;
-
-
-            const response =
-                await fetch(url);
-
-
-            if (!response.ok) {
-
-                console.warn(
-                    `WorqNow ${country}: HTTP ${response.status}`
-                );
-
-                continue;
-
-            }
-
-
-            const result =
-                await response.json();
-
-
-            console.log(
-                `WorqNow ${country}:`,
-                result
-            );
-
-
-            const records =
-                extractWorqNowRecords(
-                    result
-                );
-
-
-            records.forEach(
-                scholarship => {
-
-                    allResults.push(
-                        normalizeWorqNowScholarship(
-                            scholarship,
-                            country
-                        )
-                    );
-
-                }
-            );
-
-
-        } catch (error) {
-
-            console.warn(
-                `WorqNow ${country} unavailable:`,
-                error
-            );
-
-        }
-
-    }
-
-
-   const deduplicated =
-    deduplicateApiScholarships(
-        allResults
-    );
-
-
-const valid =
-    deduplicated.filter(
-        isValidLiveScholarship
-    );
-
-
-console.log(
-    "WorqNow:",
-    allResults.length,
-    "raw records"
-);
-
-
-console.log(
-    "WorqNow:",
-    valid.length,
-    "valid current scholarships"
-);
-
-
-console.log(
-    "WorqNow rejected:",
-    deduplicated.length - valid.length
-);
-
-
-return valid;
-
-}
-
-
-// =========================================
-// EXTRACT WORQNOW RECORDS
-// =========================================
-
-function extractWorqNowRecords(
-    result
-) {
-
-    if (
-        Array.isArray(result)
-    ) {
-
-        return result;
-
-    }
-
-
-    if (
-        Array.isArray(
-            result.data
-        )
-    ) {
-
-        return result.data;
-
-    }
-
-
-    if (
-        Array.isArray(
-            result.results
-        )
-    ) {
-
-        return result.results;
-
-    }
-
-
-    if (
-        Array.isArray(
-            result.scholarships
-        )
-    ) {
-
-        return result.scholarships;
-
-    }
-
-
-    return [];
-
-}
-
-
-// =========================================
-// NORMALIZE WORQNOW
-// =========================================
-
-function normalizeWorqNowScholarship(
-    scholarship,
-    country
-) {
 
     const title =
+        cleanText(
+            post.title?.rendered ||
+            ""
+        );
 
-        scholarship.title ||
-        scholarship.name ||
-        scholarship.scholarship_name ||
-        "International Scholarship";
 
+    if (!title) {
+
+        return null;
+
+    }
+
+
+    const content =
+        post.content?.rendered ||
+        "";
+
+
+    const excerpt =
+        cleanText(
+            post.excerpt?.rendered ||
+            ""
+        );
+
+
+    const fullText =
+        cleanText(
+            `${title} ${excerpt} ${content}`
+        );
+
+
+    // =====================================
+    // CATEGORY CHECK
+    // =====================================
+    //
+    // This is VERY important.
+    //
+    // OFA Rwanda search results contain:
+    // scholarships
+    // fellowships
+    // internships
+    // jobs
+    // challenges
+    // training
+    //
+    // We only accept scholarship posts.
+    // =====================================
+
+    const categories =
+        getPostCategories(
+            post
+        );
+
+
+    const isScholarshipCategory =
+        categories.some(
+            category =>
+                category.includes(
+                    "scholarship"
+                ) ||
+                category.includes(
+                    "bursary"
+                )
+        );
+
+
+    if (
+        !isScholarshipCategory
+    ) {
+
+        return null;
+
+    }
+
+
+    // =====================================
+    // REJECT FELLOWSHIPS
+    // =====================================
+
+    const fellowshipWords = [
+        "fellowship",
+        "fellows programme",
+        "fellows program"
+    ];
+
+
+    const looksLikeFellowship =
+        fellowshipWords.some(
+            word =>
+                title
+                    .toLowerCase()
+                    .includes(word)
+        );
+
+
+    if (
+        looksLikeFellowship
+    ) {
+
+        return null;
+
+    }
+
+
+    // =====================================
+    // AFRICA / RWANDA ELIGIBILITY
+    // =====================================
+
+    if (
+        !isAfricaOrRwandaRelevant(
+            fullText
+        )
+    ) {
+
+        return null;
+
+    }
+
+
+    // =====================================
+    // DEADLINE
+    // =====================================
+
+    const deadline =
+        extractDeadline(
+            fullText
+        );
+
+
+    // If an article contains an explicit
+    // expired deadline, reject it.
+    if (
+        deadline &&
+        isPastDate(
+            deadline
+        )
+    ) {
+
+        return null;
+
+    }
+
+
+    // =====================================
+    // APPLICATION LINK
+    // =====================================
+
+    const applicationLink =
+        extractApplicationLink(
+            content
+        );
+
+
+    // We require a usable link.
+    if (
+        !applicationLink
+    ) {
+
+        return null;
+
+    }
+
+
+    // =====================================
+    // ORGANIZATION
+    // =====================================
 
     const organization =
-
-        scholarship.organization ||
-        scholarship.provider ||
-        scholarship.university ||
-        scholarship.institution ||
-        scholarship.sponsor ||
-        "International Institution";
+        extractOrganization(
+            fullText,
+            title
+        );
 
 
-    const description =
-
-        scholarship.description ||
-        scholarship.summary ||
-        scholarship.details ||
-        "See the official scholarship information.";
-
-const deadline =
-
-    scholarship.deadline ||
-    scholarship.close_date ||
-    scholarship.closing_date ||
-    scholarship.application_deadline ||
-    scholarship.deadline_date ||
-    scholarship.deadlineDate ||
-    scholarship.applicationDeadline ||
-    scholarship.closeDate ||
-    scholarship.close_date_time ||
-    null;
- 
-
-
-  const link =
-
-    scholarship.apply_url ||
-    scholarship.application_url ||
-    null;
-
+    // =====================================
+    // LEVEL
+    // =====================================
 
     const level =
+        extractEducationLevel(
+            fullText
+        );
 
-        scholarship.level ||
-        scholarship.degree ||
-        scholarship.degree_level ||
-        scholarship.study_level ||
-        "See official details";
 
+    // =====================================
+    // FUNDING
+    // =====================================
 
     const funding =
+        extractFunding(
+            fullText
+        );
 
-        scholarship.funding ||
-        scholarship.amount ||
-        scholarship.award ||
-        scholarship.value ||
-        "See official details";
 
+    // =====================================
+    // LOCATION
+    // =====================================
 
     const location =
+        extractLocation(
+            fullText
+        );
 
-        scholarship.location ||
-        scholarship.country ||
-        countryName(country);
 
+    // =====================================
+    // REQUIREMENTS
+    // =====================================
 
     const requirements =
-
-        scholarship.requirements ||
-        scholarship.eligibility ||
-        "Check the official scholarship eligibility requirements.";
+        extractRequirements(
+            fullText
+        );
 
 
     return {
 
         id:
-            `worqnow-${country}-${slugify(title)}`,
+            `ofa-${post.id}`,
+
+        apiId:
+            post.id,
+
+        apiSource:
+            "ofa",
 
         title,
 
@@ -717,17 +517,20 @@ const deadline =
         type:
             "scholarship",
 
-        description,
+        description:
+            excerpt ||
+            `Scholarship opportunity published by ${organization}.`,
 
-        requirements:
-
-            Array.isArray(requirements)
-                ? requirements.join("\n")
-                : String(requirements),
+        requirements,
 
         deadline,
 
-        link,
+        link:
+            applicationLink,
+
+        sourceLink:
+            post.link ||
+            OFA_SOURCE_URL,
 
         location,
 
@@ -736,25 +539,20 @@ const deadline =
 
         level,
 
-        funding:
-
-            Array.isArray(funding)
-                ? funding.join(", ")
-                : String(funding),
+        funding,
 
         posted:
-            scholarship.posted ||
-            scholarship.created_at ||
+            post.date ||
             null,
 
         isApiScholarship:
             true,
 
-        source:
-            "WorqNow",
+        isApiJob:
+            false,
 
-        apiSource:
-            "worqnow"
+        source:
+            "Opportunities For Africans"
 
     };
 
@@ -762,185 +560,344 @@ const deadline =
 
 
 // =========================================
-// COUNTRY NAME
+// GET POST CATEGORIES
 // =========================================
 
-function countryName(
-    country
+function getPostCategories(
+    post
 ) {
 
-    const names = {
-
-        uk:
-            "United Kingdom",
-
-        usa:
-            "United States",
-
-        ca:
-            "Canada",
-
-        au:
-            "Australia",
-
-        de:
-            "Germany",
-
-        ie:
-            "Ireland",
-
-        nl:
-            "Netherlands"
-
-    };
+    const categories = [];
 
 
-    return (
-        names[country] ||
-        "International"
+    const embedded =
+        post?._embedded;
+
+
+    const terms =
+        embedded?.["wp:term"];
+
+
+    if (
+        Array.isArray(terms)
+    ) {
+
+        terms.forEach(
+            group => {
+
+                if (
+                    !Array.isArray(
+                        group
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                group.forEach(
+                    term => {
+
+                        if (
+                            term?.taxonomy ===
+                            "category"
+                        ) {
+
+                            categories.push(
+                                String(
+                                    term.name ||
+                                    ""
+                                )
+                                    .toLowerCase()
+                                    .trim()
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    return categories;
+
+}
+
+
+// =========================================
+// AFRICA / RWANDA RELEVANCE
+// =========================================
+
+function isAfricaOrRwandaRelevant(
+    text
+) {
+
+    const value =
+        String(
+            text || ""
+        )
+            .toLowerCase();
+
+
+    const africaTerms = [
+
+        "rwanda",
+
+        "rwandan",
+
+        "africa",
+
+        "african",
+
+        "africans",
+
+        "sub-saharan africa",
+
+        "east africa",
+
+        "east african",
+
+        "eac",
+
+        "commonwealth",
+
+        "eligible african countries",
+
+        "african countries"
+
+    ];
+
+
+    return africaTerms.some(
+        term =>
+            value.includes(
+                term
+            )
     );
 
 }
+
+
 // =========================================
-// LIVE SCHOLARSHIP QUALITY CHECK
+// DEADLINE EXTRACTION
 // =========================================
 
-function getValidFutureDeadline(value) {
+function extractDeadline(
+    text
+) {
 
-    if (!value) {
-        return null;
+    const value =
+        String(
+            text || ""
+        );
+
+
+    // =====================================
+    // ISO DATE
+    // =====================================
+
+    let match =
+        value.match(
+            /\b(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})\b/
+        );
+
+
+    if (match) {
+
+        return normalizeDate(
+            match[1],
+            match[2],
+            match[3]
+        );
+
     }
 
-    // Handle objects such as:
-    // { date: "2026-10-06" }
-    if (
-        typeof value === "object" &&
-        value !== null
-    ) {
 
-        value =
-            value.date ||
-            value.value ||
-            value.datetime ||
-            value.timestamp ||
-            null;
+    // =====================================
+    // DAY MONTH YEAR
+    // =====================================
+
+    const months = {
+
+        january: "01",
+        february: "02",
+        march: "03",
+        april: "04",
+        may: "05",
+        june: "06",
+        july: "07",
+        august: "08",
+        september: "09",
+        october: "10",
+        november: "11",
+        december: "12"
+
+    };
+
+
+    const monthPattern =
+        Object.keys(
+            months
+        ).join("|");
+
+
+    const dayMonthYear =
+        new RegExp(
+            `\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${monthPattern})\\s+(20\\d{2})\\b`,
+            "i"
+        );
+
+
+    match =
+        value.match(
+            dayMonthYear
+        );
+
+
+    if (match) {
+
+        return normalizeDate(
+            match[3],
+            months[
+                match[2]
+                    .toLowerCase()
+            ],
+            match[1]
+        );
 
     }
 
-    if (!value) {
-        return null;
+
+    // =====================================
+    // MONTH DAY YEAR
+    // =====================================
+
+    const monthDayYear =
+        new RegExp(
+            `\\b(${monthPattern})\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,)?\\s+(20\\d{2})\\b`,
+            "i"
+        );
+
+
+    match =
+        value.match(
+            monthDayYear
+        );
+
+
+    if (match) {
+
+        return normalizeDate(
+            match[3],
+            months[
+                match[1]
+                    .toLowerCase()
+            ],
+            match[2]
+        );
+
     }
 
-    const text =
-        String(value).trim();
 
-    if (!text) {
-        return null;
-    }
+    return null;
+
+}
+
+
+// =========================================
+// NORMALIZE DATE
+// =========================================
+
+function normalizeDate(
+    year,
+    month,
+    day
+) {
+
+    const y =
+        String(
+            year
+        );
+
+
+    const m =
+        String(
+            month
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const d =
+        String(
+            day
+        ).padStart(
+            2,
+            "0"
+        );
+
 
     const date =
-        new Date(text);
+        `${y}-${m}-${d}`;
+
+
+    const parsed =
+        new Date(
+            `${date}T00:00:00`
+        );
+
 
     if (
         Number.isNaN(
-            date.getTime()
+            parsed.getTime()
         )
     ) {
+
         return null;
+
     }
 
-    // Reject obviously invalid historical data.
-    // ROH should not show old deadlines.
-    const currentYear =
-        new Date().getFullYear();
 
-    if (
-        date.getFullYear() < currentYear
-    ) {
-        return null;
-    }
-
-    // Deadline must still be open.
-    const today =
-        new Date();
-
-    today.setHours(
-        0,
-        0,
-        0,
-        0
-    );
-
-    date.setHours(
-        23,
-        59,
-        59,
-        999
-    );
-
-    if (
-        date < today
-    ) {
-        return null;
-    }
-
-    return text;
+    return date;
 
 }
 
 
 // =========================================
-// VALID APPLICATION LINK
+// VALIDATE DATE
 // =========================================
 
-function getValidApplicationLink(
-    value
+function isPastDate(
+    date
 ) {
 
-    if (!value) {
-        return null;
-    }
+    if (!date) {
 
-    const text =
-        String(value).trim();
-
-    if (
-        !text ||
-        text === "#" ||
-        text.toLowerCase() === "null" ||
-        text.toLowerCase() === "undefined"
-    ) {
-        return null;
-    }
-
-    try {
-
-        const url =
-            new URL(
-                text,
-                window.location.origin
-            );
-
-        if (
-            url.protocol !== "http:" &&
-            url.protocol !== "https:"
-        ) {
-            return null;
-        }
-
-        return url.href;
-
-    } catch {
-
-        return null;
+        return false;
 
     }
+
+
+    const today =
+        todayISO();
+
+
+    return (
+        date <
+        today
+    );
 
 }
 
 
 // =========================================
-// FINAL API QUALITY CHECK
+// VALID LIVE SCHOLARSHIP
 // =========================================
 
 function isValidLiveScholarship(
@@ -948,99 +905,831 @@ function isValidLiveScholarship(
 ) {
 
     if (!scholarship) {
+
         return false;
+
     }
+
+
+    if (
+        !scholarship.title ||
+        !scholarship.link
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
+        scholarship.link ===
+        "#"
+    ) {
+
+        return false;
+
+    }
+
+
+    // =====================================
+    // DEADLINE
+    // =====================================
+
+    if (
+        scholarship.deadline &&
+        isPastDate(
+            scholarship.deadline
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    // =====================================
+    // SCHOLARSHIP ONLY
+    // =====================================
 
     const title =
-        String(
-            scholarship.title || ""
-        ).trim();
+        scholarship.title
+            .toLowerCase();
 
-    const organization =
-        String(
-            scholarship.organization || ""
-        ).trim();
 
-    const deadline =
-        getValidFutureDeadline(
-            scholarship.deadline
-        );
+    if (
+        title.includes(
+            "fellowship"
+        )
+    ) {
 
-    const link =
-        getValidApplicationLink(
-            scholarship.link
-        );
-
-    if (!title) {
         return false;
+
     }
 
-    if (!organization) {
-        return false;
-    }
-
-    // No valid future deadline = reject
-    if (!deadline) {
-        return false;
-    }
-
-    // No real application link = reject
-    if (!link) {
-        return false;
-    }
 
     return true;
 
 }
 
+
 // =========================================
-// SLUGIFY
+// APPLICATION LINK EXTRACTION
 // =========================================
 
-function slugify(
-    value
+function extractApplicationLink(
+    html
 ) {
 
-    return String(value || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "")
-        .substring(0, 80);
+    if (!html) {
+
+        return null;
+
+    }
+
+
+    try {
+
+        const parser =
+            new DOMParser();
+
+
+        const doc =
+            parser.parseFromString(
+                html,
+                "text/html"
+            );
+
+
+        const anchors =
+            Array.from(
+                doc.querySelectorAll(
+                    "a[href]"
+                )
+            );
+
+
+        // =================================
+        // FIRST PRIORITY:
+        // APPLY / APPLICATION BUTTONS
+        // =================================
+
+        for (
+            const anchor
+            of anchors
+        ) {
+
+            const text =
+                (
+                    anchor.textContent ||
+                    ""
+                )
+                    .toLowerCase()
+                    .trim();
+
+
+            const href =
+                anchor.href ||
+                "";
+
+
+            if (
+                !isUsableUrl(
+                    href
+                )
+            ) {
+
+                continue;
+
+            }
+
+
+            if (
+                text.includes(
+                    "apply"
+                ) ||
+                text.includes(
+                    "application"
+                ) ||
+                text.includes(
+                    "register"
+                ) ||
+                text.includes(
+                    "submit application"
+                )
+            ) {
+
+                return href;
+
+            }
+
+        }
+
+
+        // =================================
+        // SECOND PRIORITY:
+        // LINKS CONTAINING APPLY
+        // =================================
+
+        for (
+            const anchor
+            of anchors
+        ) {
+
+            const href =
+                anchor.href ||
+                "";
+
+
+            if (
+                !isUsableUrl(
+                    href
+                )
+            ) {
+
+                continue;
+
+            }
+
+
+            const lower =
+                href.toLowerCase();
+
+
+            if (
+                lower.includes(
+                    "apply"
+                ) ||
+                lower.includes(
+                    "application"
+                ) ||
+                lower.includes(
+                    "admission"
+                )
+            ) {
+
+                return href;
+
+            }
+
+        }
+
+
+        return null;
+
+
+    } catch (error) {
+
+        console.warn(
+            "Application link extraction failed:",
+            error
+        );
+
+        return null;
+
+    }
 
 }
 
 
 // =========================================
-// DEDUPLICATE API RESULTS
+// VALID URL
 // =========================================
 
-function deduplicateApiScholarships(
+function isUsableUrl(
+    url
+) {
+
+    if (!url) {
+
+        return false;
+
+    }
+
+
+    try {
+
+        const parsed =
+            new URL(
+                url
+            );
+
+
+        if (
+            parsed.protocol !==
+            "http:" &&
+            parsed.protocol !==
+            "https:"
+        ) {
+
+            return false;
+
+        }
+
+
+        return true;
+
+
+    } catch {
+
+        return false;
+
+    }
+
+}
+
+
+// =========================================
+// ORGANIZATION
+// =========================================
+
+function extractOrganization(
+    text,
+    title
+) {
+
+    const value =
+        String(
+            text || ""
+        );
+
+
+    const patterns = [
+
+        /(?:offered by|provided by|sponsored by|organised by|organized by)\s+([^.\n]+)/i,
+
+        /(?:university of|university|college of)\s+([^.\n]+)/i
+
+    ];
+
+
+    for (
+        const pattern
+        of patterns
+    ) {
+
+        const match =
+            value.match(
+                pattern
+            );
+
+
+        if (
+            match &&
+            match[0]
+        ) {
+
+            return cleanText(
+                match[0]
+            );
+
+        }
+
+    }
+
+
+    // Try the beginning of the
+    // title as a reasonable fallback.
+
+    const titleParts =
+        String(
+            title || ""
+        ).split(
+            " - "
+        );
+
+
+    if (
+        titleParts.length > 1
+    ) {
+
+        return cleanText(
+            titleParts[0]
+        );
+
+    }
+
+
+    return "Opportunities For Africans";
+
+}
+
+
+// =========================================
+// EDUCATION LEVEL
+// =========================================
+
+function extractEducationLevel(
+    text
+) {
+
+    const value =
+        String(
+            text || ""
+        ).toLowerCase();
+
+
+    const levels = [];
+
+
+    if (
+        value.includes(
+            "undergraduate"
+        ) ||
+        value.includes(
+            "bachelor"
+        ) ||
+        value.includes(
+            "bachelors"
+        )
+    ) {
+
+        levels.push(
+            "Undergraduate"
+        );
+
+    }
+
+
+    if (
+        value.includes(
+            "master"
+        ) ||
+        value.includes(
+            "masters"
+        ) ||
+        value.includes(
+            "postgraduate"
+        )
+    ) {
+
+        levels.push(
+            "Masters"
+        );
+
+    }
+
+
+    if (
+        value.includes(
+            "phd"
+        ) ||
+        value.includes(
+            "doctoral"
+        ) ||
+        value.includes(
+            "doctorate"
+        )
+    ) {
+
+        levels.push(
+            "PhD"
+        );
+
+    }
+
+
+    if (
+        value.includes(
+            "diploma"
+        )
+    ) {
+
+        levels.push(
+            "Diploma"
+        );
+
+    }
+
+
+    if (
+        value.includes(
+            "high school"
+        ) ||
+        value.includes(
+            "secondary school"
+        )
+    ) {
+
+        levels.push(
+            "High School"
+        );
+
+    }
+
+
+    if (!levels.length) {
+
+        return "See official details";
+
+    }
+
+
+    return [
+        ...new Set(
+            levels
+        )
+    ].join(
+        ", "
+    );
+
+}
+
+
+// =========================================
+// FUNDING
+// =========================================
+
+function extractFunding(
+    text
+) {
+
+    const value =
+        String(
+            text || ""
+        );
+
+
+    const lower =
+        value.toLowerCase();
+
+
+    if (
+        lower.includes(
+            "fully funded"
+        )
+    ) {
+
+        return "Fully Funded";
+
+    }
+
+
+    if (
+        lower.includes(
+            "fully-funded"
+        )
+    ) {
+
+        return "Fully Funded";
+
+    }
+
+
+    if (
+        lower.includes(
+            "tuition"
+        ) &&
+        lower.includes(
+            "stipend"
+        )
+    ) {
+
+        return "Tuition + Stipend";
+
+    }
+
+
+    if (
+        lower.includes(
+            "tuition"
+        )
+    ) {
+
+        return "Tuition Support";
+
+    }
+
+
+    if (
+        lower.includes(
+            "partial funding"
+        ) ||
+        lower.includes(
+            "partially funded"
+        )
+    ) {
+
+        return "Partially Funded";
+
+    }
+
+
+    if (
+        lower.includes(
+            "scholarship"
+        )
+    ) {
+
+        return "Scholarship";
+
+    }
+
+
+    return "See official details";
+
+}
+
+
+// =========================================
+// LOCATION
+// =========================================
+
+function extractLocation(
+    text
+) {
+
+    const value =
+        String(
+            text || ""
+        );
+
+
+    const lower =
+        value.toLowerCase();
+
+
+    if (
+        lower.includes(
+            "rwanda"
+        )
+    ) {
+
+        return "Rwanda / Africa";
+
+    }
+
+
+    if (
+        lower.includes(
+            "east africa"
+        )
+    ) {
+
+        return "East Africa";
+
+    }
+
+
+    if (
+        lower.includes(
+            "africa"
+        ) ||
+        lower.includes(
+            "african countries"
+        )
+    ) {
+
+        return "Africa / International";
+
+    }
+
+
+    return "International";
+
+}
+
+
+// =========================================
+// REQUIREMENTS
+// =========================================
+
+function extractRequirements(
+    text
+) {
+
+    const value =
+        String(
+            text || ""
+        );
+
+
+    const lower =
+        value.toLowerCase();
+
+
+    const requirements = [];
+
+
+    if (
+        lower.includes(
+            "african"
+        )
+    ) {
+
+        requirements.push(
+            "Applicants must meet the stated African eligibility requirements."
+        );
+
+    }
+
+
+    if (
+        lower.includes(
+            "rwanda"
+        )
+    ) {
+
+        requirements.push(
+            "Rwandan applicants should check the official eligibility requirements."
+        );
+
+    }
+
+
+    if (
+        lower.includes(
+            "undergraduate"
+        ) ||
+        lower.includes(
+            "bachelor"
+        )
+    ) {
+
+        requirements.push(
+            "Undergraduate eligibility may apply."
+        );
+
+    }
+
+
+    if (
+        lower.includes(
+            "master"
+        )
+    ) {
+
+        requirements.push(
+            "Masters eligibility may apply."
+        );
+
+    }
+
+
+    if (
+        lower.includes(
+            "phd"
+        ) ||
+        lower.includes(
+            "doctoral"
+        )
+    ) {
+
+        requirements.push(
+            "Doctoral eligibility may apply."
+        );
+
+    }
+
+
+    if (
+        !requirements.length
+    ) {
+
+        return "Check the official scholarship eligibility requirements.";
+
+    }
+
+
+    requirements.push(
+        "See the official opportunity page for complete requirements."
+    );
+
+
+    return [
+        ...new Set(
+            requirements
+        )
+    ].join(
+        "\n"
+    );
+
+}
+
+
+// =========================================
+// CLEAN TEXT
+// =========================================
+
+function cleanText(
+    value
+) {
+
+    if (!value) {
+
+        return "";
+
+    }
+
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.innerHTML =
+        String(
+            value
+        );
+
+
+    return (
+        div.textContent ||
+        div.innerText ||
+        ""
+    )
+        .replace(
+            /\s+/g,
+            " "
+        )
+        .trim();
+
+}
+
+
+// =========================================
+// DEDUPLICATE
+// =========================================
+
+function deduplicateScholarships(
     list
 ) {
 
     const seen =
         new Set();
 
+
     return list.filter(
         scholarship => {
 
             const key =
-
                 `${String(
-                    scholarship.title
+                    scholarship.title ||
+                    ""
                 )
                     .toLowerCase()
+                    .replace(
+                        /\s+/g,
+                        " "
+                    )
                     .trim()
                 }|${String(
-                    scholarship.organization
+                    scholarship.organization ||
+                    ""
                 )
                     .toLowerCase()
+                    .replace(
+                        /\s+/g,
+                        " "
+                    )
                     .trim()
                 }`;
 
 
             if (
-                seen.has(key)
+                seen.has(
+                    key
+                )
             ) {
 
                 return false;
@@ -1048,7 +1737,10 @@ function deduplicateApiScholarships(
             }
 
 
-            seen.add(key);
+            seen.add(
+                key
+            );
+
 
             return true;
 
@@ -1064,8 +1756,12 @@ function deduplicateApiScholarships(
 
 async function loadScholarships() {
 
-    if (!scholarshipsGrid) {
+    if (
+        !scholarshipsGrid
+    ) {
+
         return;
+
     }
 
 
@@ -1089,81 +1785,70 @@ async function loadScholarships() {
     try {
 
         const [
-
             supabaseScholarships,
-
-            openScholarships,
-
-            worqNowScholarships
-
+            ofaScholarships
         ] = await Promise.all([
 
             loadSupabaseScholarships(),
 
-            loadOpenScholarships(),
-
-            loadWorqNowScholarships()
+            loadOFAScholarships()
 
         ]);
 
 
         // =====================================
-        // COMBINE WITHOUT MODIFYING SUPABASE
+        // COMBINE
+        // =====================================
+        //
+        // Supabase first.
+        // External opportunities second.
+        //
+        // Nothing is written back to Supabase.
         // =====================================
 
-        scholarships = [
+        scholarships =
+            deduplicateScholarships([
 
-            ...supabaseScholarships,
+                ...supabaseScholarships,
 
-            ...openScholarships,
+                ...ofaScholarships
 
-            ...worqNowScholarships
-
-        ];
+            ]);
 
 
         console.log(
             "================================="
         );
 
-
         console.log(
             "ROH SCHOLARSHIP SOURCES"
         );
-
 
         console.log(
             "Supabase:",
             supabaseScholarships.length
         );
 
-
         console.log(
-            "Open Scholarships:",
-            openScholarships.length
+            "Opportunities For Africans:",
+            ofaScholarships.length
         );
-
-
-        console.log(
-            "WorqNow:",
-            worqNowScholarships.length
-        );
-
 
         console.log(
             "TOTAL:",
             scholarships.length
         );
 
-
         console.log(
             "================================="
         );
 
 
-        displayScholarships(
-            scholarships
-        );
+        visibleScholarships =
+            LOAD_MORE_COUNT;
+
+
+        filterScholarships();
 
 
     } catch (error) {
@@ -1174,9 +1859,6 @@ async function loadScholarships() {
         );
 
 
-        // Even if APIs fail,
-        // try to keep Supabase visible.
-
         const fallback =
             await loadSupabaseScholarships();
 
@@ -1185,9 +1867,11 @@ async function loadScholarships() {
             fallback;
 
 
-        displayScholarships(
-            scholarships
-        );
+        visibleScholarships =
+            LOAD_MORE_COUNT;
+
+
+        filterScholarships();
 
     }
 
@@ -1202,15 +1886,22 @@ function displayScholarships(
     list
 ) {
 
-    if (!scholarshipsGrid) {
+    if (
+        !scholarshipsGrid
+    ) {
+
         return;
+
     }
 
 
-    scholarshipsGrid.innerHTML = "";
+    scholarshipsGrid.innerHTML =
+        "";
 
 
-    if (!list.length) {
+    if (
+        !list.length
+    ) {
 
         scholarshipsGrid.innerHTML = `
 
@@ -1229,7 +1920,9 @@ function displayScholarships(
         `;
 
 
-        if (scholarshipCount) {
+        if (
+            scholarshipCount
+        ) {
 
             scholarshipCount.textContent =
                 "0 Opportunities";
@@ -1237,12 +1930,22 @@ function displayScholarships(
         }
 
 
+        removeLoadMoreButton();
+
+
         return;
 
     }
 
 
-    list.forEach(
+    const visibleList =
+        list.slice(
+            0,
+            visibleScholarships
+        );
+
+
+    visibleList.forEach(
         scholarship => {
 
             const card =
@@ -1259,7 +1962,8 @@ function displayScholarships(
             // SOURCE BADGE
             // =================================
 
-            let sourceBadge = "";
+            let sourceBadge =
+                "";
 
 
             if (
@@ -1293,13 +1997,10 @@ function displayScholarships(
             // =================================
 
             const deadlineText =
-
                 scholarship.deadline
-
                     ? formatDeadline(
                         scholarship.deadline
                     )
-
                     : "No deadline specified";
 
 
@@ -1308,7 +2009,6 @@ function displayScholarships(
             // =================================
 
             const funding =
-
                 scholarship.funding ||
                 "Scholarship";
 
@@ -1317,32 +2017,70 @@ function displayScholarships(
             // DETAILS LINK
             // =================================
 
-            let detailsUrl = "";
+            let detailsUrl =
+                "";
 
 
-       if (scholarship.isApiScholarship) {
+            if (
+                scholarship.isApiScholarship
+            ) {
 
-    const storageKey =
-        `roh-scholarship-${scholarship.id}`;
+                // =================================
+                // API SCHOLARSHIP
+                // =================================
+                //
+                // Store the complete record so
+                // opportunity.js can read it.
+                // =================================
 
-    sessionStorage.setItem(
-        storageKey,
-        JSON.stringify(scholarship)
-    );
+                const storageKey =
+                    `roh-scholarship-${scholarship.id}`;
 
-    detailsUrl =
-        `opportunity.html?apiScholarship=${encodeURIComponent(
-            storageKey
-        )}&type=scholarship`;
 
-} else {
+                try {
 
-    detailsUrl =
-        `opportunity.html?id=${encodeURIComponent(
-            scholarship.id
-        )}&type=scholarship`;
-} 
+                    sessionStorage.setItem(
 
+                        storageKey,
+
+                        JSON.stringify(
+                            scholarship
+                        )
+
+                    );
+
+                } catch (error) {
+
+                    console.warn(
+                        "Could not save scholarship to sessionStorage:",
+                        error
+                    );
+
+                }
+
+
+                detailsUrl =
+                    `opportunity.html?apiScholarship=${encodeURIComponent(
+                        storageKey
+                    )}&type=scholarship`;
+
+            } else {
+
+                // =================================
+                // SUPABASE SCHOLARSHIP
+                // =================================
+
+                detailsUrl =
+                    `opportunity.html?id=${encodeURIComponent(
+                        scholarship.id
+                    )}&type=scholarship`;
+
+            }
+
+
+            // =================================
+            // CARD
+            // =================================
 
             card.innerHTML = `
 
@@ -1378,6 +2116,7 @@ function displayScholarships(
                     <span>
 
                         🎓
+
                         ${escapeHtml(
                             scholarship.level ||
                             "All Levels"
@@ -1389,6 +2128,7 @@ function displayScholarships(
                     <span>
 
                         📍
+
                         ${escapeHtml(
                             scholarship.location ||
                             "International"
@@ -1400,6 +2140,7 @@ function displayScholarships(
                     <span>
 
                         💰
+
                         ${escapeHtml(
                             funding
                         )}
@@ -1414,6 +2155,7 @@ function displayScholarships(
                     <span class="scholarship-deadline">
 
                         Deadline:
+
                         ${escapeHtml(
                             deadlineText
                         )}
@@ -1440,10 +2182,137 @@ function displayScholarships(
     );
 
 
-    if (scholarshipCount) {
+    // =========================================
+    // COUNT
+    // =========================================
+
+    if (
+        scholarshipCount
+    ) {
 
         scholarshipCount.textContent =
             `${list.length} Opportunities`;
+
+    }
+
+
+    // =========================================
+    // LOAD MORE
+    // =========================================
+
+    updateLoadMoreButton(
+        list
+    );
+
+}
+
+
+// =========================================
+// LOAD MORE BUTTON
+// =========================================
+
+function updateLoadMoreButton(
+    list
+) {
+
+    removeLoadMoreButton();
+
+
+    if (
+        visibleScholarships >=
+        list.length
+    ) {
+
+        return;
+
+    }
+
+
+    const wrapper =
+        document.createElement(
+            "div"
+        );
+
+
+    wrapper.id =
+        "loadMoreScholarshipsWrapper";
+
+
+    wrapper.style.textAlign =
+        "center";
+
+    wrapper.style.margin =
+        "30px 0";
+
+
+    const button =
+        document.createElement(
+            "button"
+        );
+
+
+    button.id =
+        "loadMoreScholarships";
+
+
+    button.type =
+        "button";
+
+
+    button.textContent =
+        "Load More Scholarships";
+
+
+    button.style.cursor =
+        "pointer";
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            visibleScholarships +=
+                LOAD_MORE_COUNT;
+
+
+            displayScholarships(
+                list
+            );
+
+        }
+    );
+
+
+    wrapper.appendChild(
+        button
+    );
+
+
+    scholarshipsGrid.parentNode
+        ?.appendChild(
+            wrapper
+        );
+
+}
+
+
+// =========================================
+// REMOVE LOAD MORE
+// =========================================
+
+function removeLoadMoreButton() {
+
+    const existing =
+        document.getElementById(
+            "loadMoreScholarshipsWrapper"
+        );
+
+
+    if (
+        existing
+    ) {
+
+        existing.remove();
 
     }
 
@@ -1466,7 +2335,9 @@ function formatDeadline(
 
 
     const parsed =
-        new Date(date);
+        new Date(
+            `${date}T00:00:00`
+        );
 
 
     if (
@@ -1475,7 +2346,9 @@ function formatDeadline(
         )
     ) {
 
-        return String(date);
+        return String(
+            date
+        );
 
     }
 
@@ -1546,7 +2419,6 @@ function escapeHtml(
 function filterScholarships() {
 
     const searchTerm =
-
         searchInput
 
             ? searchInput.value
@@ -1557,7 +2429,6 @@ function filterScholarships() {
 
 
     const activeFilter =
-
         document
             .querySelector(
                 ".filter-btn.active"
@@ -1568,54 +2439,52 @@ function filterScholarships() {
 
 
     const filtered =
-
         scholarships.filter(
             scholarship => {
 
                 const title =
-
                     scholarship.title
                         ?.toLowerCase() ||
                     "";
 
 
                 const organization =
-
                     scholarship.organization
                         ?.toLowerCase() ||
                     "";
 
 
                 const location =
-
                     scholarship.location
                         ?.toLowerCase() ||
                     "";
 
 
                 const level =
-
                     scholarship.level
                         ?.toLowerCase() ||
                     "";
 
 
                 const category =
-
                     scholarship.category
                         ?.toLowerCase() ||
                     "";
 
 
                 const description =
-
                     scholarship.description
                         ?.toLowerCase() ||
                     "";
 
 
-                const matchesSearch =
+                const requirements =
+                    scholarship.requirements
+                        ?.toLowerCase() ||
+                    "";
 
+
+                const matchesSearch =
                     title.includes(
                         searchTerm
                     )
@@ -1641,6 +2510,12 @@ function filterScholarships() {
                     ||
 
                     description.includes(
+                        searchTerm
+                    )
+
+                    ||
+
+                    requirements.includes(
                         searchTerm
                     );
 
@@ -1686,7 +2561,6 @@ function filterScholarships() {
                 ) {
 
                     matchesFilter =
-
                         level.includes(
                             activeFilter
                         );
@@ -1695,14 +2569,23 @@ function filterScholarships() {
 
 
                 return (
-
                     matchesSearch &&
                     matchesFilter
-
                 );
 
             }
         );
+
+
+    filteredScholarships =
+        filtered;
+
+
+    // Reset pagination when
+    // search/filter changes.
+
+    visibleScholarships =
+        LOAD_MORE_COUNT;
 
 
     displayScholarships(
@@ -1716,10 +2599,34 @@ function filterScholarships() {
 // SEARCH
 // =========================================
 
-if (searchInput) {
+if (
+    searchInput
+) {
 
     searchInput.addEventListener(
         "input",
+        filterScholarships
+    );
+
+}
+
+
+// =========================================
+// SEARCH BUTTON
+// =========================================
+
+const searchButton =
+    document.getElementById(
+        "searchButton"
+    );
+
+
+if (
+    searchButton
+) {
+
+    searchButton.addEventListener(
+        "click",
         filterScholarships
     );
 
