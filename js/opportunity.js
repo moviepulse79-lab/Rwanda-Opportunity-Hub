@@ -1,3 +1,4 @@
+
 document.addEventListener("DOMContentLoaded", () => {
 
     const params = new URLSearchParams(window.location.search);
@@ -67,6 +68,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // ==========================================
+    // NORMALIZE LIST
+    // ==========================================
+
+    function normalizeList(value) {
+
+        if (!value) {
+            return [];
+        }
+
+        // Already an array
+        if (Array.isArray(value)) {
+
+            return value
+                .map(item => cleanText(item))
+                .filter(Boolean);
+
+        }
+
+        // Convert Supabase TEXT into array
+        return String(value)
+            .replace(/\r/g, "")
+            .split(/\n|•|●|▪|◦/)
+            .map(item =>
+                item
+                    .replace(/^[-*]\s*/, "")
+                    .trim()
+            )
+            .filter(Boolean);
+
+    }
+
+
+    // ==========================================
     // DESCRIPTION PARSER
     // ==========================================
 
@@ -104,7 +138,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const lower = cleanLine.toLowerCase();
 
 
+            // ======================================
             // RESPONSIBILITIES
+            // ======================================
 
             if (
                 /^(what you will be doing|what you'll be doing|responsibilities|responsibility|key responsibilities|duties|your responsibilities|job responsibilities|role responsibilities)/i.test(lower)
@@ -116,7 +152,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            // ======================================
             // REQUIREMENTS
+            // ======================================
 
             if (
                 /^(requirements|requirement|qualifications|qualification|minimum requirements|minimum qualifications|required qualifications|what we're looking for|what we are looking for|who we're looking for|who we are looking for|skills|experience required|eligibility|eligibility requirements)/i.test(lower)
@@ -128,7 +166,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            // ======================================
             // WHAT WE OFFER / FUNDING
+            // ======================================
 
             if (
                 /^(what we offer|what's in it for you|whats in it for you|what is in it for you|benefits|perks|we offer|our offer|employee benefits|why work for|why join us|what you get|funding|scholarship benefits|award benefits|financial support)/i.test(lower)
@@ -140,7 +180,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            // ======================================
             // APPLICATION
+            // ======================================
 
             if (
                 /^(how to apply|how do i apply|application|apply now|to apply|application process|interested candidates|application procedure)/i.test(lower)
@@ -152,7 +194,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            // ======================================
             // ABOUT
+            // ======================================
 
             if (
                 /^(about the job|about the opportunity|about|overview|job overview|role overview|position overview|the role|about us|company overview|scholarship overview|programme overview)/i.test(lower)
@@ -164,7 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            // ======================================
             // ADD CONTENT
+            // ======================================
 
             if (section === "about") {
 
@@ -207,6 +253,32 @@ document.addEventListener("DOMContentLoaded", () => {
                 opportunity.description || ""
             );
 
+
+        const responsibilities =
+            normalizeList(
+                opportunity.responsibilities
+            );
+
+
+        const requirements =
+            normalizeList(
+                opportunity.requirements
+            );
+
+
+        const offer =
+            normalizeList(
+                opportunity.whatWeOffer ||
+                opportunity.what_we_offer
+            );
+
+
+        const application =
+            normalizeList(
+                opportunity.application
+            );
+
+
         return {
 
             about:
@@ -216,25 +288,29 @@ document.addEventListener("DOMContentLoaded", () => {
                         ? [cleanText(opportunity.description)]
                         : [],
 
+
             responsibilities:
-                opportunity.responsibilities ||
-                parsed.responsibilities ||
-                [],
+                responsibilities.length
+                    ? responsibilities
+                    : parsed.responsibilities,
+
 
             requirements:
-                opportunity.requirements ||
-                parsed.requirements ||
-                [],
+                requirements.length
+                    ? requirements
+                    : parsed.requirements,
+
 
             offer:
-                opportunity.whatWeOffer ||
-                parsed.offer ||
-                [],
+                offer.length
+                    ? offer
+                    : parsed.offer,
+
 
             application:
-                opportunity.application ||
-                parsed.application ||
-                []
+                application.length
+                    ? application
+                    : parsed.application
 
         };
 
@@ -701,6 +777,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             if (
+                paragraphs.length &&
                 scholarship &&
                 sections.application.length
             ) {
@@ -708,7 +785,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 paragraphs[0].textContent =
                     sections.application.join(" ");
 
-            } else if (!scholarship) {
+            } else if (
+                paragraphs.length &&
+                !scholarship
+            ) {
 
                 paragraphs[0].textContent =
                     "Interested candidates should prepare an updated CV and submit their application through the organization's official application process.";
@@ -786,6 +866,8 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
+        // LOCATION
+
         if (infoItems[0]) {
 
             infoItems[0].textContent =
@@ -794,6 +876,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
 
+
+        // JOB TYPE / STUDY LEVEL
 
         if (infoItems[1]) {
 
@@ -814,12 +898,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        // EXPERIENCE / SCHOLARSHIP DETAILS
+
         if (infoItems[2]) {
 
             if (scholarship) {
 
                 infoItems[2].textContent =
-                    opportunity.funding ||
                     "See official details";
 
             } else {
@@ -833,6 +918,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        // CATEGORY
+
         if (infoItems[3]) {
 
             infoItems[3].textContent =
@@ -841,6 +928,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
 
+
+        // POSTED
 
         if (infoItems[4]) {
 
@@ -853,6 +942,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
 
+
+        // DEADLINE
 
         if (infoItems[5]) {
 
@@ -932,9 +1023,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (deadlineLabel) {
 
             deadlineLabel.textContent =
-                scholarship
-                    ? "APPLICATION DEADLINE"
-                    : "APPLICATION DEADLINE";
+                "APPLICATION DEADLINE";
 
         }
 
@@ -976,6 +1065,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 throw new Error(
                     "Supabase client not found."
+                );
+
+            }
+
+
+            if (!id) {
+
+                throw new Error(
+                    "No opportunity ID provided."
                 );
 
             }
@@ -1358,7 +1456,9 @@ document.addEventListener("DOMContentLoaded", () => {
             `Check out this opportunity on Rwanda Opportunity Hub: ${title}`;
 
 
+        // ======================================
         // TOP SHARE BUTTON
+        // ======================================
 
         const shareButton =
             document.getElementById(
@@ -1439,7 +1539,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        // ======================================
         // WHATSAPP
+        // ======================================
 
         const whatsapp =
             document.getElementById(
@@ -1471,7 +1573,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        // ======================================
         // FACEBOOK
+        // ======================================
 
         const facebook =
             document.getElementById(
@@ -1500,7 +1604,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        // ======================================
         // LINKEDIN
+        // ======================================
 
         const linkedin =
             document.getElementById(
@@ -1552,3 +1658,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 });
+
