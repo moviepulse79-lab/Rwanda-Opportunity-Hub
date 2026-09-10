@@ -4,8 +4,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const apiJob = params.get("apiJob");
     const id = params.get("id");
+    const requestedType = params.get("type");
 
-    console.log("Opportunity:", { apiJob, id });
+    console.log("Opportunity:", {
+        apiJob,
+        id,
+        requestedType
+    });
 
 
     // ==========================================
@@ -13,214 +18,1035 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================
 
     function cleanText(text) {
+
         return String(text || "")
             .replace(/\r/g, "")
             .replace(/\u00a0/g, " ")
             .trim();
+
     }
 
 
-    function getLines(text) {
-        return cleanText(text)
-            .split("\n")
-            .map(line => line.trim())
-            .filter(Boolean);
-    }
+    function addListItem(list, text) {
 
+        if (!list || !text) return;
 
-    function isHeading(line) {
+        const li = document.createElement("li");
 
-        const value = line
-            .toLowerCase()
-            .replace(/[’']/g, "'")
-            .replace(/:/g, "")
+        li.textContent = String(text)
+            .replace(/^[-•●▪◦*]\s*/, "")
             .trim();
 
-        return [
-            "about",
-            "about the job",
-            "about the opportunity",
-            "overview",
+        list.appendChild(li);
 
-            "responsibilities",
-            "responsibility",
-            "key responsibilities",
-            "duties",
-            "what you will be doing",
-            "what you'll be doing",
-
-            "requirements",
-            "requirement",
-            "qualifications",
-            "minimum requirements",
-            "required qualifications",
-
-            "what we offer",
-            "what's in it for you",
-            "whats in it for you",
-            "benefits",
-            "perks",
-
-            "how to apply",
-            "application"
-        ].includes(value);
     }
 
 
-    function normalizeHeading(line) {
+    function formatDate(date) {
 
-        return cleanText(line)
-            .toLowerCase()
-            .replace(/[’']/g, "'")
-            .replace(/:/g, "")
-            .trim();
+        if (!date) {
+            return "Not specified";
+        }
+
+        const parsed = new Date(date);
+
+        if (Number.isNaN(parsed.getTime())) {
+            return date;
+        }
+
+        return parsed.toLocaleDateString(
+            "en-US",
+            {
+                year: "numeric",
+                month: "long",
+                day: "numeric"
+            }
+        );
+
     }
 
 
     // ==========================================
-    // PARSE DESCRIPTION
+    // DESCRIPTION PARSER
     // ==========================================
 
     function parseDescription(description) {
 
-    const result = {
-        about: [],
-        responsibilities: [],
-        requirements: [],
-        offer: [],
-        application: []
-    };
+        const result = {
+            about: [],
+            responsibilities: [],
+            requirements: [],
+            offer: [],
+            application: []
+        };
 
-    if (!description || typeof description !== "string") {
+        if (!description || typeof description !== "string") {
+            return result;
+        }
+
+        const lines = description
+            .replace(/\r/g, "")
+            .split("\n")
+            .map(line => line.trim())
+            .filter(Boolean);
+
+        let section = "about";
+
+
+        lines.forEach(line => {
+
+            const cleanLine = line
+                .replace(/^[-•●▪◦*]\s*/, "")
+                .trim();
+
+            if (!cleanLine) return;
+
+            const lower = cleanLine.toLowerCase();
+
+
+            // RESPONSIBILITIES
+
+            if (
+                /^(what you will be doing|what you'll be doing|responsibilities|responsibility|key responsibilities|duties|your responsibilities|job responsibilities|role responsibilities)/i.test(lower)
+            ) {
+
+                section = "responsibilities";
+                return;
+
+            }
+
+
+            // REQUIREMENTS
+
+            if (
+                /^(requirements|requirement|qualifications|qualification|minimum requirements|minimum qualifications|required qualifications|what we're looking for|what we are looking for|who we're looking for|who we are looking for|skills|experience required|eligibility|eligibility requirements)/i.test(lower)
+            ) {
+
+                section = "requirements";
+                return;
+
+            }
+
+
+            // WHAT WE OFFER / FUNDING
+
+            if (
+                /^(what we offer|what's in it for you|whats in it for you|what is in it for you|benefits|perks|we offer|our offer|employee benefits|why work for|why join us|what you get|funding|scholarship benefits|award benefits|financial support)/i.test(lower)
+            ) {
+
+                section = "offer";
+                return;
+
+            }
+
+
+            // APPLICATION
+
+            if (
+                /^(how to apply|how do i apply|application|apply now|to apply|application process|interested candidates|application procedure)/i.test(lower)
+            ) {
+
+                section = "application";
+                return;
+
+            }
+
+
+            // ABOUT
+
+            if (
+                /^(about the job|about the opportunity|about|overview|job overview|role overview|position overview|the role|about us|company overview|scholarship overview|programme overview)/i.test(lower)
+            ) {
+
+                section = "about";
+                return;
+
+            }
+
+
+            // ADD CONTENT
+
+            if (section === "about") {
+
+                result.about.push(cleanLine);
+
+            } else if (section === "responsibilities") {
+
+                result.responsibilities.push(cleanLine);
+
+            } else if (section === "requirements") {
+
+                result.requirements.push(cleanLine);
+
+            } else if (section === "offer") {
+
+                result.offer.push(cleanLine);
+
+            } else if (section === "application") {
+
+                result.application.push(cleanLine);
+
+            }
+
+        });
+
+
         return result;
+
     }
 
-    const lines = description
-        .replace(/\r/g, "")
-        .split("\n")
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
 
-    let section = "about";
+    // ==========================================
+    // GET DESCRIPTION CONTENT
+    // ==========================================
 
-    lines.forEach(line => {
+    function getDescriptionSections(opportunity) {
 
-        // Remove bullet characters
-        const cleanLine = line
-            .replace(/^[-•●▪◦*]\s*/, "")
-            .trim();
+        const parsed =
+            parseDescription(
+                opportunity.description || ""
+            );
 
-        if (!cleanLine) return;
+        return {
 
-        const lower = cleanLine.toLowerCase();
+            about:
+                parsed.about.length
+                    ? parsed.about
+                    : opportunity.description
+                        ? [cleanText(opportunity.description)]
+                        : [],
 
-        // ==============================
+            responsibilities:
+                opportunity.responsibilities ||
+                parsed.responsibilities ||
+                [],
+
+            requirements:
+                opportunity.requirements ||
+                parsed.requirements ||
+                [],
+
+            offer:
+                opportunity.whatWeOffer ||
+                parsed.offer ||
+                [],
+
+            application:
+                opportunity.application ||
+                parsed.application ||
+                []
+
+        };
+
+    }
+
+
+    // ==========================================
+    // SET PAGE TYPE
+    // ==========================================
+
+    function isScholarship(opportunity) {
+
+        return (
+            opportunity.type === "scholarship" ||
+            requestedType === "scholarship"
+        );
+
+    }
+
+
+    // ==========================================
+    // DISPLAY OPPORTUNITY
+    // ==========================================
+
+    function displayOpportunity(opportunity) {
+
+        console.log(
+            "DISPLAYING OPPORTUNITY:",
+            opportunity
+        );
+
+
+        const scholarship =
+            isScholarship(opportunity);
+
+
+        // ======================================
+        // PAGE TITLE
+        // ======================================
+
+        document.title =
+            `${opportunity.title || "Opportunity"} | Rwanda Opportunity Hub`;
+
+
+        // ======================================
+        // TITLE
+        // ======================================
+
+        const title =
+            document.querySelector(
+                ".opportunity-title-area h1"
+            );
+
+        if (title) {
+
+            title.textContent =
+                opportunity.title ||
+                "Untitled Opportunity";
+
+        }
+
+
+        // ======================================
+        // ORGANIZATION
+        // ======================================
+
+        const organization =
+            document.querySelector(
+                ".organization-name"
+            );
+
+        if (organization) {
+
+            organization.textContent =
+                opportunity.organization ||
+                "Unknown Organization";
+
+        }
+
+
+        // ======================================
+        // BREADCRUMB
+        // ======================================
+
+        const breadcrumb =
+            document.querySelector(
+                ".breadcrumb span:last-child"
+            );
+
+        if (breadcrumb) {
+
+            breadcrumb.textContent =
+                opportunity.title ||
+                "Opportunity";
+
+        }
+
+
+        // ======================================
+        // BREADCRUMB LINK
+        // ======================================
+
+        const breadcrumbLink =
+            document.querySelector(
+                ".breadcrumb a"
+            );
+
+        if (breadcrumbLink) {
+
+            if (scholarship) {
+
+                breadcrumbLink.textContent =
+                    "Scholarships";
+
+                breadcrumbLink.href =
+                    "scholarships.html";
+
+            } else {
+
+                breadcrumbLink.textContent =
+                    "Jobs";
+
+                breadcrumbLink.href =
+                    "jobs.html";
+
+            }
+
+        }
+
+
+        // ======================================
+        // TYPE BADGE
+        // ======================================
+
+        const jobBadge =
+            document.querySelector(
+                ".job-type-badge"
+            );
+
+        if (jobBadge) {
+
+            if (scholarship) {
+
+                jobBadge.textContent =
+                    "SCHOLARSHIP";
+
+            } else {
+
+                jobBadge.textContent =
+                    String(
+                        opportunity.type ||
+                        "FULL TIME"
+                    ).toUpperCase();
+
+            }
+
+        }
+
+
+        // ======================================
+        // LOGOS
+        // ======================================
+
+        document
+            .querySelectorAll(".large-company-logo")
+            .forEach(logo => {
+
+                if (opportunity.company_logo) {
+
+                    logo.innerHTML = `
+                        <img
+                            src="${opportunity.company_logo}"
+                            alt="${opportunity.organization || ""}"
+                        >
+                    `;
+
+                } else {
+
+                    logo.textContent =
+                        String(
+                            opportunity.organization ||
+                            "O"
+                        )
+                        .charAt(0)
+                        .toUpperCase();
+
+                }
+
+            });
+
+
+        // ======================================
+        // HEADER META
+        // ======================================
+
+        const meta =
+            document.querySelectorAll(
+                ".header-meta span"
+            );
+
+
+        if (meta[0]) {
+
+            meta[0].textContent =
+                `📍 ${opportunity.location || "International"}`;
+
+        }
+
+
+        if (meta[1]) {
+
+            if (scholarship) {
+
+                meta[1].textContent =
+                    `🎓 ${opportunity.level || "All Levels"}`;
+
+            } else {
+
+                meta[1].textContent =
+                    `💼 ${opportunity.type || "Job"}`;
+
+            }
+
+        }
+
+
+        if (meta[2]) {
+
+            meta[2].textContent =
+                `🏷 ${opportunity.category || "General"}`;
+
+        }
+
+
+        // ======================================
+        // DESCRIPTION
+        // ======================================
+
+        const sections =
+            getDescriptionSections(
+                opportunity
+            );
+
+
+        // ======================================
+        // ABOUT
+        // ======================================
+
+        const aboutBlock =
+            document.getElementById(
+                "aboutOpportunityBlock"
+            );
+
+        const aboutContent =
+            document.getElementById(
+                "aboutOpportunityContent"
+            );
+
+
+        if (aboutBlock && aboutContent) {
+
+            aboutContent.innerHTML = "";
+
+
+            if (sections.about.length) {
+
+                sections.about.forEach(text => {
+
+                    const p =
+                        document.createElement("p");
+
+                    p.textContent =
+                        cleanText(text);
+
+                    aboutContent.appendChild(p);
+
+                });
+
+            } else {
+
+                const p =
+                    document.createElement("p");
+
+                p.textContent =
+                    "No description provided.";
+
+                aboutContent.appendChild(p);
+
+            }
+
+        }
+
+
+        // ======================================
         // RESPONSIBILITIES
-        // ==============================
+        // ======================================
+
+        const responsibilitiesBlock =
+            document.getElementById(
+                "responsibilitiesBlock"
+            );
+
+        const responsibilitiesList =
+            document.getElementById(
+                "responsibilitiesList"
+            );
+
+
         if (
-            /^(what you will be doing|what you'll be doing|responsibilities|responsibility|key responsibilities|duties|your responsibilities|job responsibilities|role responsibilities)/i.test(lower)
+            responsibilitiesBlock &&
+            responsibilitiesList
         ) {
-            section = "responsibilities";
-            return;
+
+            responsibilitiesList.innerHTML = "";
+
+
+            if (
+                !scholarship &&
+                sections.responsibilities.length
+            ) {
+
+                sections.responsibilities.forEach(item => {
+
+                    addListItem(
+                        responsibilitiesList,
+                        item
+                    );
+
+                });
+
+                responsibilitiesBlock.style.display =
+                    "";
+
+            } else {
+
+                responsibilitiesBlock.style.display =
+                    "none";
+
+            }
+
         }
 
-        // ==============================
+
+        // ======================================
         // REQUIREMENTS
-        // ==============================
+        // ======================================
+
+        const requirementsBlock =
+            document.getElementById(
+                "requirementsBlock"
+            );
+
+        const requirementsList =
+            document.getElementById(
+                "requirementsList"
+            );
+
+
         if (
-            /^(requirements|requirement|qualifications|qualification|minimum requirements|minimum qualifications|required qualifications|what we're looking for|what we are looking for|who we're looking for|who we are looking for|skills|experience required)/i.test(lower)
+            requirementsBlock &&
+            requirementsList
         ) {
-            section = "requirements";
-            return;
+
+            requirementsList.innerHTML = "";
+
+
+            if (
+                sections.requirements.length
+            ) {
+
+                sections.requirements.forEach(item => {
+
+                    addListItem(
+                        requirementsList,
+                        item
+                    );
+
+                });
+
+                requirementsBlock.style.display =
+                    "";
+
+            } else {
+
+                requirementsBlock.style.display =
+                    "none";
+
+            }
+
         }
 
-        // ==============================
+
+        // ======================================
         // WHAT WE OFFER
-        // ==============================
+        // ======================================
+
+        const offerBlock =
+            document.getElementById(
+                "whatWeOfferBlock"
+            );
+
+        const offerList =
+            document.getElementById(
+                "whatWeOfferList"
+            );
+
+
         if (
-            /^(what we offer|what's in it for you|whats in it for you|what is in it for you|benefits|perks|we offer|our offer|employee benefits|why work for|why join us|what you get)/i.test(lower)
+            offerBlock &&
+            offerList
         ) {
-            section = "offer";
-            return;
+
+            offerList.innerHTML = "";
+
+
+            if (
+                sections.offer.length
+            ) {
+
+                sections.offer.forEach(item => {
+
+                    addListItem(
+                        offerList,
+                        item
+                    );
+
+                });
+
+                offerBlock.style.display =
+                    "";
+
+            } else {
+
+                offerBlock.style.display =
+                    "none";
+
+            }
+
         }
 
-        // ==============================
-        // APPLICATION
-        // ==============================
-        if (
-            /^(how to apply|how do i apply|application|apply now|to apply|application process|interested candidates)/i.test(lower)
-        ) {
-            section = "application";
-            return;
+
+        // ======================================
+        // HOW TO APPLY
+        // ======================================
+
+        const applicationSection =
+            [...document.querySelectorAll(
+                ".content-block"
+            )]
+            .find(block =>
+                block.querySelector("h2")
+                    ?.textContent
+                    .trim()
+                    .toLowerCase() ===
+                "how to apply"
+            );
+
+
+        if (applicationSection) {
+
+            const paragraphs =
+                applicationSection
+                    .querySelectorAll("p");
+
+
+            if (
+                scholarship &&
+                sections.application.length
+            ) {
+
+                paragraphs[0].textContent =
+                    sections.application.join(" ");
+
+            } else if (!scholarship) {
+
+                paragraphs[0].textContent =
+                    "Interested candidates should prepare an updated CV and submit their application through the organization's official application process.";
+
+            }
+
         }
 
-        // ==============================
-        // ABOUT / INTRO
-        // ==============================
-        if (
-            /^(about the job|about the opportunity|about|overview|job overview|role overview|position overview|the role|about us|company overview)/i.test(lower)
-        ) {
-            section = "about";
-            return;
+
+        // ======================================
+        // APPLY BUTTON
+        // ======================================
+
+        const applyButton =
+            document.querySelector(
+                ".apply-button"
+            );
+
+
+        if (applyButton) {
+
+            if (
+                opportunity.link &&
+                opportunity.link !== "#"
+            ) {
+
+                applyButton.href =
+                    opportunity.link;
+
+                applyButton.target =
+                    "_blank";
+
+                applyButton.rel =
+                    "noopener noreferrer";
+
+                applyButton.style.display =
+                    "";
+
+            } else {
+
+                applyButton.style.display =
+                    "none";
+
+            }
+
         }
 
-        // ==============================
-        // ADD CONTENT
-        // ==============================
 
-        if (section === "about") {
-            result.about.push(cleanLine);
+        // ======================================
+        // APPLY NOTE
+        // ======================================
 
-        } else if (section === "responsibilities") {
-            result.responsibilities.push(cleanLine);
+        const applyNote =
+            document.querySelector(
+                ".apply-note"
+            );
 
-        } else if (section === "requirements") {
-            result.requirements.push(cleanLine);
+        if (applyNote) {
 
-        } else if (section === "offer") {
-            result.offer.push(cleanLine);
+            applyNote.textContent =
+                scholarship
+                    ? "You will be redirected to the official scholarship application or information page."
+                    : "You will be redirected to the organization's official application page.";
 
-        } else if (section === "application") {
-            result.application.push(cleanLine);
         }
 
-    });
 
-    console.log("PARSED DESCRIPTION:", result);
+        // ======================================
+        // QUICK INFO
+        // ======================================
 
-    return result;
-}
+        const infoItems =
+            document.querySelectorAll(
+                ".info-item strong"
+            );
 
 
-    // ==========================================
-    // CREATE LIST ITEM
-    // ==========================================
+        if (infoItems[0]) {
 
-    function addListItem(list, text) {
+            infoItems[0].textContent =
+                opportunity.location ||
+                "International";
 
-        const li = document.createElement("li");
+        }
 
-        li.textContent = text
-            .replace(/^[-•*]\s*/, "")
-            .trim();
 
-        list.appendChild(li);
+        if (infoItems[1]) {
+
+            if (scholarship) {
+
+                infoItems[1].textContent =
+                    opportunity.level ||
+                    "All Levels";
+
+            } else {
+
+                infoItems[1].textContent =
+                    opportunity.type ||
+                    "Full Time";
+
+            }
+
+        }
+
+
+        if (infoItems[2]) {
+
+            if (scholarship) {
+
+                infoItems[2].textContent =
+                    opportunity.funding ||
+                    "See official details";
+
+            } else {
+
+                infoItems[2].textContent =
+                    opportunity.experience ||
+                    "Not specified";
+
+            }
+
+        }
+
+
+        if (infoItems[3]) {
+
+            infoItems[3].textContent =
+                opportunity.category ||
+                "General";
+
+        }
+
+
+        if (infoItems[4]) {
+
+            infoItems[4].textContent =
+                formatDate(
+                    opportunity.posted ||
+                    opportunity.posted_date ||
+                    opportunity.created_at
+                );
+
+        }
+
+
+        if (infoItems[5]) {
+
+            infoItems[5].textContent =
+                opportunity.deadline
+                    ? formatDate(
+                        opportunity.deadline
+                    )
+                    : "Not specified";
+
+        }
+
+
+        // ======================================
+        // ORGANIZATION CARD
+        // ======================================
+
+        const orgStrong =
+            document.querySelector(
+                ".organization-profile strong"
+            );
+
+        if (orgStrong) {
+
+            orgStrong.textContent =
+                opportunity.organization ||
+                "Unknown Organization";
+
+        }
+
+
+        const orgDescription =
+            document.querySelector(
+                ".organization-card p"
+            );
+
+        if (orgDescription) {
+
+            orgDescription.textContent =
+                scholarship
+                    ? `Learn more about scholarships offered by ${opportunity.organization || "this organization"}.`
+                    : `Explore opportunities from ${opportunity.organization || "this organization"}.`;
+
+        }
+
+
+        // ======================================
+        // DEADLINE CARD
+        // ======================================
+
+        const deadlineStrong =
+            document.querySelector(
+                ".deadline-warning strong"
+            );
+
+        if (deadlineStrong) {
+
+            deadlineStrong.textContent =
+                opportunity.deadline
+                    ? formatDate(
+                        opportunity.deadline
+                    )
+                    : "No deadline specified";
+
+        }
+
+
+        // ======================================
+        // DEADLINE LABEL
+        // ======================================
+
+        const deadlineLabel =
+            document.querySelector(
+                ".deadline-warning span"
+            );
+
+        if (deadlineLabel) {
+
+            deadlineLabel.textContent =
+                scholarship
+                    ? "APPLICATION DEADLINE"
+                    : "APPLICATION DEADLINE";
+
+        }
+
+
+        // ======================================
+        // SHARE
+        // ======================================
+
+        setupSharing(opportunity);
+
+
+        // ======================================
+        // RELATED
+        // ======================================
+
+        if (!opportunity.isApiJob) {
+
+            loadRelatedOpportunities(
+                opportunity
+            );
+
+        }
+
     }
 
 
     // ==========================================
-    // DISPLAY API JOB
+    // LOAD SUPABASE OPPORTUNITY
+    // ==========================================
+
+    async function loadSupabaseOpportunity() {
+
+        try {
+
+            if (
+                typeof supabaseClient ===
+                "undefined"
+            ) {
+
+                throw new Error(
+                    "Supabase client not found."
+                );
+
+            }
+
+
+            const {
+                data,
+                error
+            } = await supabaseClient
+                .from("opportunities")
+                .select("*")
+                .eq("id", id)
+                .single();
+
+
+            if (error) {
+                throw error;
+            }
+
+
+            if (!data) {
+
+                throw new Error(
+                    "Opportunity not found."
+                );
+
+            }
+
+
+            data.isApiJob = false;
+
+
+            displayOpportunity(
+                data
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Supabase opportunity error:",
+                error
+            );
+
+            showError(
+                "Opportunity not found."
+            );
+
+        }
+
+    }
+
+
+    // ==========================================
+    // LOAD API JOB
     // ==========================================
 
     async function loadApiOpportunity() {
 
         try {
 
-            console.log("Loading API job:", apiJob);
-
-            const response = await fetch(
-                `https://api.jobopportunitiesapi.org/public/jobs/${encodeURIComponent(apiJob)}`
+            console.log(
+                "Loading API job:",
+                apiJob
             );
+
+
+            const response =
+                await fetch(
+                    `https://api.jobopportunitiesapi.org/public/jobs/${encodeURIComponent(apiJob)}`
+                );
 
 
             if (!response.ok) {
@@ -232,41 +1058,54 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
-            const result = await response.json();
+            const result =
+                await response.json();
 
-            console.log("API RESPONSE:", result);
 
-
-            const job = result.data || result;
+            const job =
+                result.data ||
+                result;
 
 
             if (!job) {
-                throw new Error("Job data not found.");
+
+                throw new Error(
+                    "Job data not found."
+                );
+
             }
 
 
             const description =
-    job.description ||
-    result.description ||
-    result.data?.description ||
-    "";
-
-console.log("RAW DESCRIPTION:", description);
-
-const parsed = parseDescription(description);
-
-console.log("PARSED DESCRIPTION:", parsed);
+                job.description ||
+                result.description ||
+                result.data?.description ||
+                "";
 
 
-            console.log("PARSED DESCRIPTION:", parsed);
+            const parsed =
+                parseDescription(
+                    description
+                );
 
 
-             const opportunity = {
-    id: `api-${job.id}`,
-    api_id: job.id,
-    slug: job.slug,
-    isApiJob: true,
-    title: job.title || "Untitled Job",
+            const opportunity = {
+
+                id:
+                    `api-${job.id}`,
+
+                api_id:
+                    job.id,
+
+                slug:
+                    job.slug,
+
+                isApiJob:
+                    true,
+
+                title:
+                    job.title ||
+                    "Untitled Job",
 
                 organization:
                     job.company ||
@@ -277,7 +1116,8 @@ console.log("PARSED DESCRIPTION:", parsed);
                     job.city ||
                     "Rwanda",
 
-                type: "job",
+                type:
+                    "job",
 
                 category:
                     job.category ||
@@ -324,7 +1164,10 @@ console.log("PARSED DESCRIPTION:", parsed);
             };
 
 
-            displayOpportunity(opportunity);
+            displayOpportunity(
+                opportunity
+            );
+
 
         } catch (error) {
 
@@ -335,703 +1178,6 @@ console.log("PARSED DESCRIPTION:", parsed);
 
             showError(
                 "Unable to load this job opportunity."
-            );
-
-        }
-
-    }
-
-
-    // ==========================================
-    // DISPLAY OPPORTUNITY
-    // ==========================================
-
-    function displayOpportunity(opportunity) {
-
-        console.log(
-            "DISPLAYING:",
-            opportunity
-        );
-
-
-        // --------------------------------------
-        // TITLE
-        // --------------------------------------
-
-        const title =
-            document.querySelector(
-                ".opportunity-title-area h1"
-            );
-
-        if (title) {
-            title.textContent =
-                opportunity.title;
-        }
-
-
-        // --------------------------------------
-        // ORGANIZATION
-        // --------------------------------------
-
-        const organization =
-            document.querySelector(
-                ".organization-name"
-            );
-
-        if (organization) {
-
-            organization.textContent =
-                opportunity.organization;
-
-        }
-
-
-        // --------------------------------------
-        // BREADCRUMB
-        // --------------------------------------
-
-        const breadcrumb =
-            document.querySelector(
-                ".breadcrumb span:last-child"
-            );
-
-        if (breadcrumb) {
-
-            breadcrumb.textContent =
-                opportunity.title;
-
-        }
-
-
-        // --------------------------------------
-        // LOGOS
-        // --------------------------------------
-
-        document
-            .querySelectorAll(".large-company-logo")
-            .forEach(logo => {
-
-                if (opportunity.company_logo) {
-
-                    logo.innerHTML = `
-                        <img
-                            src="${opportunity.company_logo}"
-                            alt="${opportunity.organization}"
-                        >
-                    `;
-
-                } else {
-
-                    logo.textContent =
-                        opportunity.organization
-                            .charAt(0)
-                            .toUpperCase();
-
-                }
-
-            });
-
-
-        // --------------------------------------
-        // HEADER META
-        // --------------------------------------
-
-        const meta =
-            document.querySelectorAll(
-                ".header-meta span"
-            );
-
-
-        if (meta[0]) {
-
-            meta[0].textContent =
-                `📍 ${opportunity.location}`;
-
-        }
-
-
-        if (meta[1]) {
-
-            meta[1].textContent =
-                `💼 ${opportunity.type || "Job"}`;
-
-        }
-
-
-        if (meta[2]) {
-
-            meta[2].textContent =
-                `🏷 ${opportunity.category || "General"}`;
-
-        }
-
-
-        // ======================================
-        // ABOUT
-        // ======================================
-
-        const aboutBlock =
-            document.getElementById(
-                "aboutOpportunityBlock"
-            );
-
-        const aboutContent =
-            document.getElementById(
-                "aboutOpportunityContent"
-            );
-
-
-        if (aboutBlock && aboutContent) {
-
-            aboutContent.innerHTML = "";
-
-
-            const aboutLines =
-                opportunity.description
-                    ? parseDescription(
-                        opportunity.description
-                    ).about
-                    : [];
-
-
-            if (aboutLines.length) {
-
-                aboutLines.forEach(line => {
-
-                    const p =
-                        document.createElement("p");
-
-                    p.textContent =
-                        line.replace(
-                            /^[-•*]\s*/,
-                            ""
-                        );
-
-                    aboutContent.appendChild(p);
-
-                });
-
-            } else {
-
-                const p =
-                    document.createElement("p");
-
-                p.textContent =
-                    "No description provided.";
-
-                aboutContent.appendChild(p);
-
-            }
-
-        }
-
-
-        // ======================================
-        // RESPONSIBILITIES
-        // ======================================
-
-        const responsibilitiesBlock =
-            document.getElementById(
-                "responsibilitiesBlock"
-            );
-
-        const responsibilitiesList =
-            document.getElementById(
-                "responsibilitiesList"
-            );
-
-
-        if (
-            responsibilitiesBlock &&
-            responsibilitiesList
-        ) {
-
-            responsibilitiesList.innerHTML = "";
-
-
-            if (
-                opportunity.responsibilities &&
-                opportunity.responsibilities.length
-            ) {
-
-                opportunity.responsibilities
-                    .forEach(item => {
-
-                        addListItem(
-                            responsibilitiesList,
-                            item
-                        );
-
-                    });
-
-                responsibilitiesBlock.style.display =
-                    "";
-
-            } else {
-
-                responsibilitiesBlock.style.display =
-                    "none";
-
-            }
-
-        }
-
-
-        // ======================================
-        // REQUIREMENTS
-        // ======================================
-
-        const requirementsBlock =
-            document.getElementById(
-                "requirementsBlock"
-            );
-
-        const requirementsList =
-            document.getElementById(
-                "requirementsList"
-            );
-
-
-        if (
-            requirementsBlock &&
-            requirementsList
-        ) {
-
-            requirementsList.innerHTML = "";
-
-
-            if (
-                opportunity.requirements &&
-                opportunity.requirements.length
-            ) {
-
-                opportunity.requirements
-                    .forEach(item => {
-
-                        addListItem(
-                            requirementsList,
-                            item
-                        );
-
-                    });
-
-                requirementsBlock.style.display =
-                    "";
-
-            } else {
-
-                requirementsBlock.style.display =
-                    "none";
-
-            }
-
-        }
-
-
-        // ======================================
-        // WHAT WE OFFER
-        // ======================================
-
-        const offerBlock =
-            document.getElementById(
-                "whatWeOfferBlock"
-            );
-
-        const offerList =
-            document.getElementById(
-                "whatWeOfferList"
-            );
-
-
-        if (
-            offerBlock &&
-            offerList
-        ) {
-
-            offerList.innerHTML = "";
-
-
-            if (
-                opportunity.whatWeOffer &&
-                opportunity.whatWeOffer.length
-            ) {
-
-                opportunity.whatWeOffer
-                    .forEach(item => {
-
-                        addListItem(
-                            offerList,
-                            item
-                        );
-
-                    });
-
-                offerBlock.style.display =
-                    "";
-
-            } else {
-
-                offerBlock.style.display =
-                    "none";
-
-            }
-
-        }
-
-
-        // ======================================
-        // APPLY BUTTON
-        // ======================================
-
-        const applyButton =
-            document.querySelector(
-                ".apply-button"
-            );
-
-
-        if (applyButton) {
-
-            if (
-                opportunity.link &&
-                opportunity.link !== "#"
-            ) {
-
-                applyButton.href =
-                    opportunity.link;
-
-                applyButton.target =
-                    "_blank";
-
-                applyButton.rel =
-                    "noopener noreferrer";
-
-            } else {
-
-                applyButton.style.display =
-                    "none";
-
-            }
-
-        }
-
-
-        // ======================================
-        // QUICK INFO
-        // ======================================
-
-        const infoItems =
-            document.querySelectorAll(
-                ".info-item strong"
-            );
-
-
-        if (infoItems[0]) {
-
-            infoItems[0].textContent =
-                opportunity.location;
-
-        }
-
-
-        if (infoItems[1]) {
-
-            infoItems[1].textContent =
-                "Full Time";
-
-        }
-
-
-        if (infoItems[2]) {
-
-            infoItems[2].textContent =
-                opportunity.experience ||
-                "Not specified";
-
-        }
-
-
-        if (infoItems[3]) {
-
-            infoItems[3].textContent =
-                opportunity.category ||
-                "General";
-
-        }
-
-
-        if (infoItems[4]) {
-
-            infoItems[4].textContent =
-                formatDate(
-                    opportunity.posted_date
-                );
-
-        }
-
-
-        if (infoItems[5]) {
-
-            infoItems[5].textContent =
-                opportunity.deadline
-                    ? formatDate(
-                        opportunity.deadline
-                    )
-                    : "Not specified";
-
-        }
-
-
-        // ======================================
-        // ORGANIZATION CARD
-        // ======================================
-
-        const orgStrong =
-            document.querySelector(
-                ".organization-profile strong"
-            );
-
-        if (orgStrong) {
-
-            orgStrong.textContent =
-                opportunity.organization;
-
-        }
-
-
-        const orgDescription =
-            document.querySelector(
-                ".organization-card p"
-            );
-
-        if (orgDescription) {
-
-            orgDescription.textContent =
-                `Explore opportunities from ${opportunity.organization}.`;
-
-        }
-
-
-        // ======================================
-        // DEADLINE CARD
-        // ======================================
-
-        const deadlineStrong =
-            document.querySelector(
-                ".deadline-warning strong"
-            );
-
-        if (deadlineStrong) {
-
-            deadlineStrong.textContent =
-                opportunity.deadline
-                    ? formatDate(
-                        opportunity.deadline
-                    )
-                    : "No deadline specified";
-
-        }
-
-
-        // ======================================
-        // APPLICATION NOTE
-        // ======================================
-
-        const applicationSection =
-            [...document.querySelectorAll(
-                ".content-block"
-            )]
-            .find(block =>
-                block.querySelector("h2")?.textContent
-                    .trim()
-                    .toLowerCase() ===
-                "how to apply"
-            );
-
-
-        if (applicationSection) {
-
-            const paragraphs =
-                applicationSection
-                    .querySelectorAll("p");
-
-
-            if (opportunity.application?.length) {
-
-                paragraphs[0].textContent =
-                    opportunity.application.join(" ");
-
-            }
-
-        }
-// ======================================
-// SHARE OPPORTUNITY
-// ======================================
-
-const shareButton = document.getElementById("shareButton");
-
-if (shareButton) {
-
-    shareButton.onclick = async () => {
-
-        const shareUrl = window.location.href;
-
-        const shareData = {
-            title: opportunity.title || "Opportunity",
-            text: `Check out this opportunity on Rwanda Opportunity Hub: ${opportunity.title}`,
-            url: shareUrl
-        };
-
-        try {
-
-            // Mobile / supported browsers
-            if (navigator.share) {
-
-                await navigator.share(shareData);
-
-            } else {
-
-                // Desktop fallback
-                await navigator.clipboard.writeText(shareUrl);
-
-                const originalText =
-                    shareButton.innerHTML;
-
-                shareButton.innerHTML =
-                    "✓ Link Copied!";
-
-                setTimeout(() => {
-
-                    shareButton.innerHTML =
-                        originalText;
-
-                }, 2000);
-
-            }
-
-        } catch (error) {
-
-            // User pressed Cancel
-            if (error.name !== "AbortError") {
-
-                console.error(
-                    "Share failed:",
-                    error
-                );
-
-                // Final fallback
-                try {
-
-                    await navigator.clipboard.writeText(
-                        shareUrl
-                    );
-
-                    alert(
-                        "Opportunity link copied!"
-                    );
-
-                } catch (copyError) {
-
-                    console.error(
-                        "Copy failed:",
-                        copyError
-                    );
-
-                }
-
-            }
-
-        }
-
-    };
-
-}
-setupSharing(opportunity);
-        // ======================================
-        // RELATED
-        // ======================================
-
-        if (!opportunity.isApiJob) {
-
-            loadRelatedOpportunities(
-                opportunity
-            );
-
-        }
-
-    }
-
-
-    // ==========================================
-    // SUPABASE OPPORTUNITY
-    // ==========================================
-
-    async function loadSupabaseOpportunity() {
-
-        try {
-
-            if (
-                typeof supabaseClient ===
-                "undefined"
-            ) {
-
-                throw new Error(
-                    "Supabase client not found."
-                );
-
-            }
-
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-
-                .from("opportunities")
-
-                .select("*")
-
-                .eq("id", id)
-
-                .single();
-
-
-            if (error) {
-
-                throw error;
-
-            }
-
-
-            if (!data) {
-
-                throw new Error(
-                    "Opportunity not found."
-                );
-
-            }
-
-
-            data.isApiJob = false;
-
-            displayOpportunity(
-                data
-            );
-
-
-            loadRelatedOpportunities(
-                data
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "Supabase opportunity error:",
-                error
-            );
-
-            showError(
-                "Opportunity not found."
             );
 
         }
@@ -1062,21 +1208,22 @@ setupSharing(opportunity);
                 data,
                 error
             } = await supabaseClient
-
                 .from("opportunities")
-
                 .select("*")
-
                 .eq(
                     "type",
                     opportunity.type
                 )
-
                 .neq(
                     "id",
                     opportunity.id
                 )
-
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                )
                 .limit(4);
 
 
@@ -1095,10 +1242,17 @@ setupSharing(opportunity);
             grid.innerHTML = "";
 
 
+            if (!data || !data.length) {
+                return;
+            }
+
+
             data.forEach(item => {
 
                 const card =
-                    document.createElement("div");
+                    document.createElement(
+                        "div"
+                    );
 
                 card.className =
                     "related-card";
@@ -1107,7 +1261,7 @@ setupSharing(opportunity);
                 card.innerHTML = `
 
                     <h3>
-                        ${item.title}
+                        ${item.title || ""}
                     </h3>
 
                     <p>
@@ -1115,7 +1269,7 @@ setupSharing(opportunity);
                     </p>
 
                     <a
-                        href="opportunity.html?id=${item.id}"
+                        href="opportunity.html?id=${item.id}&type=${encodeURIComponent(item.type || "")}"
                     >
                         View Opportunity →
                     </a>
@@ -1146,68 +1300,233 @@ setupSharing(opportunity);
 
     function showError(message) {
 
-        const content =
+        const main =
             document.querySelector(
-                ".opportunity-content"
+                "main"
+            );
+
+        if (!main) return;
+
+
+        const firstSection =
+            main.querySelector(
+                ".opportunity-section"
             );
 
 
-        if (!content) return;
+        if (firstSection) {
 
+            firstSection.innerHTML = `
 
-        content.innerHTML = `
+                <div class="section-container">
 
-            <div class="content-block">
+                    <section class="content-block">
 
-                <h2>
-                    Error
-                </h2>
+                        <h2>
+                            Error
+                        </h2>
 
-                <p>
-                    ${message}
-                </p>
+                        <p>
+                            ${message}
+                        </p>
 
-            </div>
+                    </section>
 
-        `;
+                </div>
+
+            `;
+
+        }
 
     }
 
 
     // ==========================================
-    // DATE FORMAT
+    // SOCIAL SHARING
     // ==========================================
 
-    function formatDate(date) {
+    function setupSharing(opportunity) {
 
-        if (!date) {
-            return "Not specified";
+        const shareUrl =
+            window.location.href;
+
+        const title =
+            opportunity.title ||
+            "Opportunity";
+
+        const text =
+            `Check out this opportunity on Rwanda Opportunity Hub: ${title}`;
+
+
+        // TOP SHARE BUTTON
+
+        const shareButton =
+            document.getElementById(
+                "shareButton"
+            );
+
+
+        if (shareButton) {
+
+            shareButton.onclick =
+                async () => {
+
+                    if (navigator.share) {
+
+                        try {
+
+                            await navigator.share({
+                                title,
+                                text,
+                                url: shareUrl
+                            });
+
+                        } catch (error) {
+
+                            if (
+                                error.name !==
+                                "AbortError"
+                            ) {
+
+                                console.error(
+                                    "Share failed:",
+                                    error
+                                );
+
+                            }
+
+                        }
+
+                    } else {
+
+                        try {
+
+                            await navigator.clipboard
+                                .writeText(
+                                    shareUrl
+                                );
+
+
+                            const oldText =
+                                shareButton.innerHTML;
+
+
+                            shareButton.innerHTML =
+                                "✓ Link Copied!";
+
+
+                            setTimeout(() => {
+
+                                shareButton.innerHTML =
+                                    oldText;
+
+                            }, 2000);
+
+
+                        } catch (error) {
+
+                            prompt(
+                                "Copy this opportunity link:",
+                                shareUrl
+                            );
+
+                        }
+
+                    }
+
+                };
+
         }
 
 
-        const parsed =
-            new Date(date);
+        // WHATSAPP
+
+        const whatsapp =
+            document.getElementById(
+                "shareWhatsApp"
+            );
 
 
-        if (
-            Number.isNaN(
-                parsed.getTime()
-            )
-        ) {
+        if (whatsapp) {
 
-            return date;
+            whatsapp.onclick = () => {
+
+                const message =
+                    `${text}\n\n${shareUrl}`;
+
+
+                const whatsappUrl =
+                    `https://wa.me/?text=${encodeURIComponent(
+                        message
+                    )}`;
+
+
+                window.open(
+                    whatsappUrl,
+                    "_blank"
+                );
+
+            };
 
         }
 
 
-        return parsed.toLocaleDateString(
-            "en-US",
-            {
-                year: "numeric",
-                month: "long",
-                day: "numeric"
-            }
-        );
+        // FACEBOOK
+
+        const facebook =
+            document.getElementById(
+                "shareFacebook"
+            );
+
+
+        if (facebook) {
+
+            facebook.onclick = () => {
+
+                const facebookUrl =
+                    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+                        shareUrl
+                    )}`;
+
+
+                window.open(
+                    facebookUrl,
+                    "_blank",
+                    "width=600,height=500"
+                );
+
+            };
+
+        }
+
+
+        // LINKEDIN
+
+        const linkedin =
+            document.getElementById(
+                "shareLinkedIn"
+            );
+
+
+        if (linkedin) {
+
+            linkedin.onclick = () => {
+
+                const linkedinUrl =
+                    `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                        shareUrl
+                    )}`;
+
+
+                window.open(
+                    linkedinUrl,
+                    "_blank",
+                    "width=600,height=600"
+                );
+
+            };
+
+        }
 
     }
 
@@ -1233,159 +1552,3 @@ setupSharing(opportunity);
     }
 
 });
-
-// ======================================
-// SOCIAL SHARING
-// ======================================
-
-function setupSharing(opportunity) {
-
-    const shareUrl = window.location.href;
-
-    const title =
-        opportunity.title || "Opportunity";
-
-    const text =
-        `Check out this opportunity on Rwanda Opportunity Hub: ${title}`;
-
-    // ----------------------------------
-    // TOP SHARE BUTTON
-    // ----------------------------------
-
-    const shareButton =
-        document.getElementById("shareButton");
-
-    if (shareButton) {
-
-        shareButton.onclick = async () => {
-
-            if (navigator.share) {
-
-                try {
-
-                    await navigator.share({
-                        title: title,
-                        text: text,
-                        url: shareUrl
-                    });
-
-                } catch (error) {
-
-                    if (error.name !== "AbortError") {
-                        console.error("Share failed:", error);
-                    }
-
-                }
-
-            } else {
-
-                try {
-
-                    await navigator.clipboard.writeText(shareUrl);
-
-                    const oldText =
-                        shareButton.innerHTML;
-
-                    shareButton.innerHTML =
-                        "✓ Link Copied!";
-
-                    setTimeout(() => {
-
-                        shareButton.innerHTML =
-                            oldText;
-
-                    }, 2000);
-
-                } catch (error) {
-
-                    prompt(
-                        "Copy this opportunity link:",
-                        shareUrl
-                    );
-
-                }
-
-            }
-
-        };
-
-    }
-
-
-    // ----------------------------------
-    // WHATSAPP
-    // ----------------------------------
-
-    const whatsapp =
-        document.getElementById("shareWhatsApp");
-
-    if (whatsapp) {
-
-        whatsapp.onclick = () => {
-
-            const message =
-                `${text}\n\n${shareUrl}`;
-
-            const whatsappUrl =
-                `https://wa.me/?text=${encodeURIComponent(message)}`;
-
-            window.open(
-                whatsappUrl,
-                "_blank"
-            );
-
-        };
-
-    }
-
-
-    // ----------------------------------
-    // FACEBOOK
-    // ----------------------------------
-
-    const facebook =
-        document.getElementById("shareFacebook");
-
-    if (facebook) {
-
-        facebook.onclick = () => {
-
-            const facebookUrl =
-                `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-
-            window.open(
-                facebookUrl,
-                "_blank",
-                "width=600,height=500"
-            );
-
-        };
-
-    }
-
-
-    // ----------------------------------
-    // LINKEDIN
-    // ----------------------------------
-
-    const linkedin =
-        document.getElementById("shareLinkedIn");
-
-    if (linkedin) {
-
-        linkedin.onclick = () => {
-
-            const linkedinUrl =
-                `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
-
-            window.open(
-                linkedinUrl,
-                "_blank",
-                "width=600,height=600"
-            );
-
-        };
-
-    }
-
-}
