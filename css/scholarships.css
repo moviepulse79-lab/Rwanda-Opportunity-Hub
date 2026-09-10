@@ -308,14 +308,13 @@
     }
 
 }
-
 /* ================================
-   LOAD MORE BUTTON
+   LOAD MORE SCHOLARSHIPS BUTTON
 ================================ */
 
-#loadMoreBtn {
-    display: block;
-    margin: 35px auto 50px;
+#loadMoreScholarships {
+    display: inline-block;
+    margin: 0 auto;
     padding: 14px 32px;
 
     background: #087f5b;
@@ -335,7 +334,7 @@
 }
 
 /* Hover */
-#loadMoreBtn:hover {
+#loadMoreScholarships:hover {
     background: #f5c542;
     border-color: #f5c542;
     color: #111;
@@ -346,15 +345,16 @@
 }
 
 /* Click */
-#loadMoreBtn:active {
+#loadMoreScholarships:active {
     transform: translateY(0);
 }
 
 /* Disabled */
-#loadMoreBtn:disabled {
+#loadMoreScholarships:disabled {
     background: #ccc;
     border-color: #ccc;
     color: #666;
+
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
@@ -362,10 +362,12 @@
 
 /* Mobile */
 @media (max-width: 600px) {
-    #loadMoreBtn {
+    #loadMoreScholarships {
         width: calc(100% - 40px);
         max-width: 350px;
+
         padding: 13px 20px;
-        margin: 30px auto 40px;
+        font-size: 14px;
     }
 }
+
