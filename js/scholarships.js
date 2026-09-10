@@ -106,7 +106,6 @@ async function loadSupabaseScholarships() {
 
 }
 
-
 // =========================================
 // LOAD OPEN SCHOLARSHIPS API
 // =========================================
@@ -143,13 +142,40 @@ async function loadOpenScholarships() {
         console.log(
             "Open Scholarships API:",
             results.length,
-            "records"
+            "raw records"
         );
 
 
-        return results
-            .filter(isUsefulOpenScholarship)
-            .map(normalizeOpenScholarship);
+        const normalized =
+            results
+                .filter(
+                    isUsefulOpenScholarship
+                )
+                .map(
+                    normalizeOpenScholarship
+                );
+
+
+        const valid =
+            normalized.filter(
+                isValidLiveScholarship
+            );
+
+
+        console.log(
+            "Open Scholarships API:",
+            valid.length,
+            "valid current scholarships"
+        );
+
+
+        console.log(
+            "Open Scholarships API rejected:",
+            normalized.length - valid.length
+        );
+
+
+        return valid;
 
 
     } catch (error) {
@@ -164,6 +190,9 @@ async function loadOpenScholarships() {
     }
 
 }
+
+
+
 
 
 // =========================================
@@ -381,10 +410,9 @@ function normalizeOpenScholarship(
             scholarship.deadline ||
             null,
 
-        link:
-            links.apply_url ||
-            links.info_url ||
-            "#",
+       link:
+    links.apply_url ||
+    null,
 
         location:
             residency.length
@@ -497,9 +525,39 @@ async function loadWorqNowScholarships() {
     }
 
 
-    return deduplicateApiScholarships(
+   const deduplicated =
+    deduplicateApiScholarships(
         allResults
     );
+
+
+const valid =
+    deduplicated.filter(
+        isValidLiveScholarship
+    );
+
+
+console.log(
+    "WorqNow:",
+    allResults.length,
+    "raw records"
+);
+
+
+console.log(
+    "WorqNow:",
+    valid.length,
+    "valid current scholarships"
+);
+
+
+console.log(
+    "WorqNow rejected:",
+    deduplicated.length - valid.length
+);
+
+
+return valid;
 
 }
 
@@ -593,24 +651,26 @@ function normalizeWorqNowScholarship(
         scholarship.details ||
         "See the official scholarship information.";
 
+const deadline =
 
-    const deadline =
+    scholarship.deadline ||
+    scholarship.close_date ||
+    scholarship.closing_date ||
+    scholarship.application_deadline ||
+    scholarship.deadline_date ||
+    scholarship.deadlineDate ||
+    scholarship.applicationDeadline ||
+    scholarship.closeDate ||
+    scholarship.close_date_time ||
+    null;
+ 
 
-        scholarship.deadline ||
-        scholarship.close_date ||
-        scholarship.closing_date ||
-        scholarship.application_deadline ||
-        null;
 
+  const link =
 
-    const link =
-
-        scholarship.apply_url ||
-        scholarship.application_url ||
-        scholarship.url ||
-        scholarship.link ||
-        scholarship.website ||
-        "#";
+    scholarship.apply_url ||
+    scholarship.application_url ||
+    null;
 
 
     const level =
@@ -741,7 +801,197 @@ function countryName(
     );
 
 }
+// =========================================
+// LIVE SCHOLARSHIP QUALITY CHECK
+// =========================================
 
+function getValidFutureDeadline(value) {
+
+    if (!value) {
+        return null;
+    }
+
+    // Handle objects such as:
+    // { date: "2026-10-06" }
+    if (
+        typeof value === "object" &&
+        value !== null
+    ) {
+
+        value =
+            value.date ||
+            value.value ||
+            value.datetime ||
+            value.timestamp ||
+            null;
+
+    }
+
+    if (!value) {
+        return null;
+    }
+
+    const text =
+        String(value).trim();
+
+    if (!text) {
+        return null;
+    }
+
+    const date =
+        new Date(text);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+        return null;
+    }
+
+    // Reject obviously invalid historical data.
+    // ROH should not show old deadlines.
+    const currentYear =
+        new Date().getFullYear();
+
+    if (
+        date.getFullYear() < currentYear
+    ) {
+        return null;
+    }
+
+    // Deadline must still be open.
+    const today =
+        new Date();
+
+    today.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+    date.setHours(
+        23,
+        59,
+        59,
+        999
+    );
+
+    if (
+        date < today
+    ) {
+        return null;
+    }
+
+    return text;
+
+}
+
+
+// =========================================
+// VALID APPLICATION LINK
+// =========================================
+
+function getValidApplicationLink(
+    value
+) {
+
+    if (!value) {
+        return null;
+    }
+
+    const text =
+        String(value).trim();
+
+    if (
+        !text ||
+        text === "#" ||
+        text.toLowerCase() === "null" ||
+        text.toLowerCase() === "undefined"
+    ) {
+        return null;
+    }
+
+    try {
+
+        const url =
+            new URL(
+                text,
+                window.location.origin
+            );
+
+        if (
+            url.protocol !== "http:" &&
+            url.protocol !== "https:"
+        ) {
+            return null;
+        }
+
+        return url.href;
+
+    } catch {
+
+        return null;
+
+    }
+
+}
+
+
+// =========================================
+// FINAL API QUALITY CHECK
+// =========================================
+
+function isValidLiveScholarship(
+    scholarship
+) {
+
+    if (!scholarship) {
+        return false;
+    }
+
+    const title =
+        String(
+            scholarship.title || ""
+        ).trim();
+
+    const organization =
+        String(
+            scholarship.organization || ""
+        ).trim();
+
+    const deadline =
+        getValidFutureDeadline(
+            scholarship.deadline
+        );
+
+    const link =
+        getValidApplicationLink(
+            scholarship.link
+        );
+
+    if (!title) {
+        return false;
+    }
+
+    if (!organization) {
+        return false;
+    }
+
+    // No valid future deadline = reject
+    if (!deadline) {
+        return false;
+    }
+
+    // No real application link = reject
+    if (!link) {
+        return false;
+    }
+
+    return true;
+
+}
 
 // =========================================
 // SLUGIFY
