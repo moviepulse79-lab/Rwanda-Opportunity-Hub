@@ -3,9 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const params = new URLSearchParams(window.location.search);
 
-    const apiJob = params.get("apiJob");
-    const id = params.get("id");
-    const requestedType = params.get("type");
+ const apiJob = params.get("apiJob");
+const apiScholarship = params.get("apiScholarship");
+const id = params.get("id");
+const requestedType = params.get("type");
 
     console.log("Opportunity:", {
         apiJob,
@@ -1049,7 +1050,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
+// ==========================================
+// LOAD API SCHOLARSHIP
+// ==========================================
 
+function loadApiScholarship() {
+
+    try {
+
+        const storedScholarship =
+            sessionStorage.getItem(apiScholarship);
+
+        if (!storedScholarship) {
+
+            throw new Error(
+                "Scholarship data not found."
+            );
+
+        }
+
+        const scholarship =
+            JSON.parse(storedScholarship);
+
+        scholarship.isApiScholarship = true;
+
+        scholarship.isApiJob = false;
+
+        scholarship.type = "scholarship";
+
+        console.log(
+            "API SCHOLARSHIP:",
+            scholarship
+        );
+
+        displayOpportunity(
+            scholarship
+        );
+
+    } catch (error) {
+
+        console.error(
+            "API scholarship error:",
+            error
+        );
+
+        showError(
+            "Unable to load this scholarship opportunity. Please return to the Scholarships page and try again."
+        );
+
+    }
+
+}
     // ==========================================
     // LOAD SUPABASE OPPORTUNITY
     // ==========================================
@@ -1641,21 +1692,22 @@ document.addEventListener("DOMContentLoaded", () => {
     // START
     // ==========================================
 
-    if (apiJob) {
+    if (apiScholarship) {
 
-        loadApiOpportunity();
+    loadApiScholarship();
 
-    } else if (id) {
+} else if (apiJob) {
 
-        loadSupabaseOpportunity();
+    loadApiOpportunity();
 
-    } else {
+} else if (id) {
 
-        showError(
-            "No opportunity selected."
-        );
+    loadSupabaseOpportunity();
 
-    }
+} else {
 
-});
+    showError(
+        "No opportunity selected."
+    );
 
+}
