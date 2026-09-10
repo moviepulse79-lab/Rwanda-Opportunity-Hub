@@ -575,129 +575,62 @@ function filterScholarships() {
 
     const searchTerm =
         searchInput
-
-            ? searchInput.value
-                .toLowerCase()
-                .trim()
-
+            ? searchInput.value.toLowerCase().trim()
             : "";
-
 
     const activeFilter =
         document
-            .querySelector(
-                ".filter-btn.active"
-            )
-            ?.dataset.filter ||
-
-        "all";
-
+            .querySelector(".filter-btn.active")
+            ?.dataset.filter || "all";
 
     const filtered =
-        scholarships.filter(
-            scholarship => {
+        scholarships.filter(scholarship => {
 
+            const title =
+                scholarship.title?.toLowerCase() || "";
 
-                const title =
-                    scholarship.title
-                        ?.toLowerCase() || "";
+            const organization =
+                scholarship.organization?.toLowerCase() || "";
 
+            const location =
+                scholarship.location?.toLowerCase() || "";
 
-                const organization =
-                    scholarship.organization
-                        ?.toLowerCase() || "";
+            const level =
+                scholarship.level?.toLowerCase() || "";
 
+            const category =
+                scholarship.category?.toLowerCase() || "";
 
-                const location =
-                    scholarship.location
-                        ?.toLowerCase() || "";
+            const matchesSearch =
+                title.includes(searchTerm) ||
+                organization.includes(searchTerm) ||
+                location.includes(searchTerm) ||
+                level.includes(searchTerm);
 
+            let matchesFilter = true;
 
-                const level =
-                    scholarship.level
-                        ?.toLowerCase() || "";
+            if (activeFilter === "international") {
 
+                matchesFilter =
+                    category.includes("international") ||
+                    location !== "" &&
+                    !location.includes("rwanda");
 
-                const funding =
-                    scholarship.funding
-                        ?.toLowerCase() || "";
+            } else if (activeFilter !== "all") {
 
-
-                const description =
-                    scholarship.description
-                        ?.toLowerCase() || "";
-
-
-                const matchesSearch =
-
-                    title.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    organization.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    location.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    level.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    funding.includes(
-                        searchTerm
-                    )
-
-                    ||
-
-                    description.includes(
-                        searchTerm
-                    );
-
-
-                let matchesFilter =
-                    true;
-
-
-                // =================================
-                // LEVEL FILTERS
-                // =================================
-
-                if (
-                    activeFilter !== "all"
-                ) {
-
-                    matchesFilter =
-                        level.includes(
-                            activeFilter
-                        );
-
-                }
-
-
-                return (
-                    matchesSearch &&
-                    matchesFilter
-                );
+                matchesFilter =
+                    level.includes(activeFilter);
 
             }
-        );
 
+            return (
+                matchesSearch &&
+                matchesFilter
+            );
 
-    displayScholarships(
-        filtered
-    );
+        });
 
+    displayScholarships(filtered);
 }
 
 
