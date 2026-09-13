@@ -690,24 +690,13 @@ async function loadFellowships() {
 
     `;
 
-
-    const [
-
-        supabaseFellowships,
-
-        chanceHubFellowships,
-
-        grantsFellowships
-
-    ] = await Promise.all([
-
-        loadSupabaseFellowships(),
-
-        loadChanceHubFellowships(),
-
-        loadGrantsGovFellowships()
-
-    ]);
+const [
+    supabaseFellowships,
+    chanceHubFellowships
+] = await Promise.all([
+    loadSupabaseFellowships(),
+    loadChanceHubFellowships()
+]);
 
 
     console.log(
@@ -721,25 +710,18 @@ async function loadFellowships() {
     );
 
     console.log(
-        "Grants.gov fellowships:",
-        grantsFellowships.length
-    );
-
+    "Grants.gov: disabled because browser CORS is blocked"
+);
 
     // =====================================
     // COMBINE ALL SOURCES
     // =====================================
 
-    fellowships =
-        deduplicateFellowships([
-
-            ...supabaseFellowships,
-
-            ...chanceHubFellowships,
-
-            ...grantsFellowships
-
-        ]);
+   fellowships =
+    deduplicateFellowships([
+        ...supabaseFellowships,
+        ...chanceHubFellowships
+    ]);
 
 
     console.log(
