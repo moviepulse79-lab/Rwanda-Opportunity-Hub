@@ -737,287 +737,150 @@ const [
 }
 
 
-// =========================================
-// DISPLAY FELLOWSHIPS
-// =========================================
-
 function displayFellowships(data) {
-
-    if (!fellowshipsGrid) {
-        return;
-    }
-
+    if (!fellowshipsGrid) return;
 
     if (fellowshipCount) {
-
         fellowshipCount.textContent =
             `${data.length} Opportunities`;
-
     }
 
-
-    if (!data.length) {
-
+    if (data.length === 0) {
         fellowshipsGrid.innerHTML = `
-
             <div class="no-results">
-
-                <h3>
-                    No fellowships found
-                </h3>
-
-                <p>
-                    Try another search or category.
-                </p>
-
+                <h3>No fellowships found</h3>
+                <p>Try another search or category.</p>
             </div>
-
         `;
-
         return;
-
     }
 
+    // Check whether the deadline has passed
+    function isDeadlinePassed(deadline) {
+        if (!deadline) return false;
+
+        const deadlineDate = new Date(deadline);
+
+        if (isNaN(deadlineDate.getTime())) {
+            return false;
+        }
+
+        // Set both dates to midnight
+        deadlineDate.setHours(0, 0, 0, 0);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        return deadlineDate < today;
+    }
 
     fellowshipsGrid.innerHTML =
+        data.map(fellowship => {
 
-        data.map(
-            fellowship => {
+            const ended =
+                isDeadlinePassed(fellowship.deadline);
 
+            return `
+                <article class="fellowship-card">
 
-                // =================================
-                // SOURCE BADGE
-                // =================================
+                    <div class="fellowship-card-top">
+                        <div class="fellowship-icon">🤝</div>
 
-                let sourceBadge = "";
+                        ${
+                            ended
+                            ? `
+                                <span
+                                    class="verified-badge"
+                                    style="
+                                        background:#777;
+                                        color:#fff;
+                                    "
+                                >
+                                    Ended
+                                </span>
+                            `
+                            : `
+                                <span class="verified-badge">
+                                    ✓ Verified
+                                </span>
+                            `
+                        }
+                    </div>
 
+                    <span class="fellowship-type">
+                        ${fellowship.type || "Fellowship"}
+                    </span>
 
-                if (
-                    fellowship.sourceType ===
-                    "supabase"
-                ) {
+                    <h3>
+                        ${fellowship.title || "Untitled Fellowship"}
+                    </h3>
 
-                    sourceBadge = `
+                    <p class="fellowship-organization">
+                        ${fellowship.organization || "Organization"}
+                    </p>
 
-                        <span
-                            class="verified-badge"
-                            style="
-                                background:#087f5b;
-                                color:#fff;
-                            "
-                        >
-                            ✓ Verified
-                        </span>
-
-                    `;
-
-                }
-
-                else if (
-                    fellowship.sourceType ===
-                    "chancehub"
-                ) {
-
-                    sourceBadge = `
-
-                        <span
-                            class="verified-badge"
-                            style="
-                                background:#2563eb;
-                                color:#fff;
-                            "
-                        >
-                            🌐 ChanceHub
-                        </span>
-
-                    `;
-
-                }
-
-                else if (
-                    fellowship.sourceType ===
-                    "grants"
-                ) {
-
-                    sourceBadge = `
-
-                        <span
-                            class="verified-badge"
-                            style="
-                                background:#7c3aed;
-                                color:#fff;
-                            "
-                        >
-                            🇺🇸 Grants.gov
-                        </span>
-
-                    `;
-
-                }
-
-
-                // =================================
-                // ACTION BUTTON
-                // =================================
-
-                let actionButton = "";
-
-
-                if (
-                    fellowship.sourceType ===
-                    "supabase"
-                ) {
-
-                    actionButton = `
-
-                        <a
-                            href="opportunity.html?id=${encodeURIComponent(
-                                fellowship.originalId
-                            )}&type=fellowship"
-                        >
-                            View Details →
-                        </a>
-
-                    `;
-
-                }
-
-                else if (
-                    fellowship.link
-                ) {
-
-                    actionButton = `
-
-                        <a
-                            href="${escapeHtml(
-                                fellowship.link
-                            )}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            Apply / View →
-                        </a>
-
-                    `;
-
-                }
-
-                else {
-
-                    actionButton = `
+                    <div class="fellowship-meta">
 
                         <span>
-                            Details unavailable
+                            📍 ${fellowship.location || "International"}
                         </span>
 
-                    `;
-
-                }
-
-
-                return `
-
-                    <article
-                        class="fellowship-card"
-                    >
-
-
-                        <div
-                            class="fellowship-card-top"
-                        >
-
-                            <div
-                                class="fellowship-icon"
-                            >
-                                🤝
-                            </div>
-
-                            ${sourceBadge}
-
-                        </div>
-
-
-                        <span
-                            class="fellowship-type"
-                        >
-                            Fellowship
+                        <span>
+                            ⏱ ${fellowship.duration || "Not specified"}
                         </span>
 
+                        <span>
+                            🎓 ${fellowship.level || "All Levels"}
+                        </span>
 
-                        <h3>
-                            ${escapeHtml(
-                                fellowship.title
-                            )}
-                        </h3>
+                    </div>
 
+                    <div class="fellowship-bottom">
 
-                        <p
-                            class="fellowship-organization"
-                        >
-                            ${escapeHtml(
-                                fellowship.organization
-                            )}
-                        </p>
+                        ${
+                            ended
+                            ? `
+                                <span
+                                    class="fellowship-deadline"
+                                    style="color:#ff4d4d;font-weight:600;"
+                                >
+                                    Application Ended
+                                </span>
+                            `
+                            : `
+                                <span class="fellowship-deadline">
+                                    Deadline:
+                                    ${fellowship.deadline || "No deadline"}
+                                </span>
+                            `
+                        }
 
+                        ${
+                            ended
+                            ? `
+                                <span
+                                    style="
+                                        color:#888;
+                                        cursor:not-allowed;
+                                    "
+                                >
+                                    Closed
+                                </span>
+                            `
+                            : `
+                                <a
+                                    href="opportunity.html?id=${fellowship.id}&type=fellowship"
+                                >
+                                    View Details →
+                                </a>
+                            `
+                        }
 
-                        <div
-                            class="fellowship-meta"
-                        >
+                    </div>
 
-                            <span>
-                                📍
-                                ${escapeHtml(
-                                    fellowship.location
-                                )}
-                            </span>
-
-
-                            <span>
-                                ⏱
-                                ${escapeHtml(
-                                    fellowship.duration
-                                )}
-                            </span>
-
-
-                            <span>
-                                🎓
-                                ${escapeHtml(
-                                    fellowship.level
-                                )}
-                            </span>
-
-                        </div>
-
-
-                        <div
-                            class="fellowship-bottom"
-                        >
-
-                            <span
-                                class="fellowship-deadline"
-                            >
-
-                                Deadline:
-                                ${escapeHtml(
-                                    fellowship.deadline
-                                )}
-
-                            </span>
-
-
-                            ${actionButton}
-
-                        </div>
-
-
-                    </article>
-
-                `;
-
-            }
-        ).join("");
-
+                </article>
+            `;
+        }).join("");
 }
 
 
