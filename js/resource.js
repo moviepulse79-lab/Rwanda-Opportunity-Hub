@@ -89,49 +89,112 @@ if (!resource) {
 
 
         <h2>
-            Why This Matters
+            Why This Resource Matters
         </h2>
 
         <p>
-            Preparing yourself properly can make a
-            major difference when applying for
-            opportunities. Taking time to understand
-            what organizations are looking for can
-            help you present your skills and experience
-            more effectively.
+            Access to reliable information and
+            trusted learning resources can help
+            students, graduates, job seekers,
+            professionals and entrepreneurs make
+            better career and education decisions.
         </p>
 
 
         <h2>
-            Practical Tips
+            How to Use This Resource
         </h2>
 
         <ul>
 
             <li>
-                Understand the opportunity before
-                applying.
+                Read the information carefully before
+                applying or registering.
             </li>
 
             <li>
-                Prepare your documents carefully.
+                Check the official requirements and
+                eligibility conditions.
             </li>
 
             <li>
-                Highlight your relevant skills and
-                experience.
+                Prepare your documents and information
+                before starting an application.
             </li>
 
             <li>
-                Check all requirements and deadlines.
+                Always verify important deadlines and
+                instructions on the official website.
             </li>
 
             <li>
-                Submit your application early whenever
-                possible.
+                Never pay money to an unofficial person
+                promising guaranteed opportunities.
             </li>
 
         </ul>
+
+
+        <h2>
+            Who Can Benefit?
+        </h2>
+
+        <p>
+            This resource may be useful for Rwandan
+            students, graduates, job seekers,
+            professionals, entrepreneurs and anyone
+            looking to develop their skills or access
+            new opportunities.
+        </p>
+
+
+        ${
+            resource.link
+                ? `
+                    <div
+                        class="official-resource-box"
+                        style="
+                            margin-top: 30px;
+                            padding: 25px;
+                            border-radius: 12px;
+                            background: #111;
+                            border: 1px solid #087f5b;
+                        "
+                    >
+
+                        <h2>
+                            Visit the Official Resource
+                        </h2>
+
+                        <p>
+                            Use the official website below
+                            to access the full resource,
+                            application or information.
+                        </p>
+
+                        <a
+                            href="${resource.link}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="resource-button"
+                            style="
+                                display: inline-block;
+                                margin-top: 10px;
+                                padding: 12px 20px;
+                                background: #087f5b;
+                                color: white;
+                                text-decoration: none;
+                                border-radius: 8px;
+                                font-weight: 600;
+                            "
+                        >
+                            Visit Official Resource →
+                        </a>
+
+                    </div>
+                `
+                : ""
+        }
 
 
         <h2>
@@ -139,11 +202,11 @@ if (!resource) {
         </h2>
 
         <p>
-            Keep improving your skills, stay informed
-            about new opportunities and continue
-            building your professional profile.
-            Consistency can open doors to new
-            opportunities.
+            Always use official sources when applying
+            for jobs, scholarships, training programmes
+            or other opportunities. Keep your CV,
+            certificates and professional profile
+            updated, and continue developing your skills.
         </p>
 
     `;
@@ -224,7 +287,8 @@ if (!resource) {
 
                 const shareData = {
 
-                    title: resource.title,
+                    title:
+                        resource.title,
 
                     text:
                         resource.description,
