@@ -1,281 +1,161 @@
+document.addEventListener("DOMContentLoaded", () => {
 
-// =========================================
-// RESOURCES FROM SUPABASE
-// =========================================
+    const resourcesGrid = document.getElementById("resourcesGrid");
+    const searchInput = document.getElementById("resourceSearch");
+    const filterButtons = document.querySelectorAll(".resource-filter");
 
-const resourcesGrid =
-    document.getElementById("resourcesGrid");
-
-const resourceSearch =
-    document.getElementById("resourceSearch");
-
-const resourceFilters =
-    document.querySelectorAll(".resource-filter");
-
-
-let resources = [];
-
-let currentResourceFilter = "all";
-
-
-// =========================================
-// LOAD RESOURCES
-// =========================================
-
-async function loadResources() {
-
-    if (!resourcesGrid) return;
-
-
-    resourcesGrid.innerHTML = `
-        <div class="no-results">
-            <h3>Loading resources...</h3>
-            <p>Please wait.</p>
-        </div>
-    `;
-
-
-    const {
-        data,
-        error
-    } = await supabaseClient
-        .from("opportunities")
-        .select("*")
-        .eq("type", "resource")
-        .order("created_at", {
-            ascending: false
-        });
-
-
-    if (error) {
-
-        console.error(
-            "Failed to load resources:",
-            error
-        );
-
-
-        resourcesGrid.innerHTML = `
-            <div class="no-results">
-                <h3>Unable to load resources</h3>
-                <p>Please try again later.</p>
-            </div>
-        `;
-
+    if (!resourcesGrid) {
+        console.error("Resources grid not found.");
         return;
     }
 
+    // Make sure resources data exists
+    const resources = Array.isArray(window.resources)
+        ? window.resources
+        : [];
 
-    resources = data || [];
-
-
-    displayResources(resources);
-
-}
-
-
-// =========================================
-// DISPLAY RESOURCES
-// =========================================
-
-function displayResources(data) {
-
-    if (!resourcesGrid) return;
+    let activeFilter = "all";
 
 
-    if (data.length === 0) {
+    // =========================================
+    // RENDER RESOURCES
+    // =========================================
 
-        resourcesGrid.innerHTML = `
+    function renderResources() {
 
-            <div class="no-results">
-
-                <h3>
-                    No resources found
-                </h3>
-
-                <p>
-                    Try another search or category.
-                </p>
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    resourcesGrid.innerHTML =
-        data.map(resource => `
-
-        <article class="resource-card">
-
-            <div class="resource-icon">
-                📚
-            </div>
-
-
-            <span class="resource-type">
-                Resource
-            </span>
-
-
-            <h3>
-                ${resource.title || "Untitled Resource"}
-            </h3>
-
-
-            <p>
-                ${resource.description || "No description available."}
-            </p>
-
-
-            <a
-                href="opportunity.html?id=${resource.id}&type=resource"
-                class="resource-link"
-            >
-                Read Guide →
-            </a>
-
-        </article>
-
-    `).join("");
-
-}
-
-
-// =========================================
-// SEARCH + FILTER
-// =========================================
-
-function filterResources() {
-
-    const searchTerm =
-        resourceSearch
-            ? resourceSearch.value
-                .toLowerCase()
-                .trim()
+        const searchTerm = searchInput
+            ? searchInput.value.toLowerCase().trim()
             : "";
 
 
-    const filtered =
-        resources.filter(resource => {
-
-            const title =
-                resource.title?.toLowerCase() || "";
-
-            const description =
-                resource.description?.toLowerCase() || "";
-
-            const organization =
-                resource.organization?.toLowerCase() || "";
-
-            const type =
-                resource.type?.toLowerCase() || "";
-
-
-            const matchesSearch =
-
-                title.includes(searchTerm)
-
-                ||
-
-                description.includes(searchTerm)
-
-                ||
-
-                organization.includes(searchTerm)
-
-                ||
-
-                type.includes(searchTerm);
-
-
-            /*
-                We currently don't have a
-                separate category column.
-
-                The type column identifies
-                the resource.
-            */
+        const filteredResources = resources.filter(resource => {
 
             const matchesFilter =
+                activeFilter === "all" ||
+                resource.category === activeFilter;
 
-                currentResourceFilter === "all"
+            const searchableText = `
+                ${resource.title || ""}
+                ${resource.description || ""}
+                ${resource.type || ""}
+            `.toLowerCase();
 
-                ||
+            const matchesSearch =
+                searchableText.includes(searchTerm);
 
-                type.includes(
-                    currentResourceFilter.toLowerCase()
-                );
-
-
-            return (
-                matchesSearch &&
-                matchesFilter
-            );
+            return matchesFilter && matchesSearch;
 
         });
 
 
-    displayResources(filtered);
-
-}
+        resourcesGrid.innerHTML = "";
 
 
-// =========================================
-// SEARCH
-// =========================================
+        // No results
+        if (filteredResources.length === 0) {
 
-if (resourceSearch) {
+            resourcesGrid.innerHTML = `
+                <div class="no-resources">
+                    <h3>No resources found</h3>
+                    <p>
+                        Try another search or choose a different category.
+                    </p>
+                </div>
+            `;
 
-    resourceSearch.addEventListener(
-        "input",
-        filterResources
-    );
-
-}
+            return;
+        }
 
 
-// =========================================
-// FILTER BUTTONS
-// =========================================
+        // Create cards
+        filteredResources.forEach(resource => {
 
-resourceFilters.forEach(button => {
+            const card = document.createElement("article");
 
-    button.addEventListener(
-        "click",
-        () => {
+            card.className = "resource-card";
 
-            resourceFilters.forEach(btn => {
 
-                btn.classList.remove(
-                    "active"
-                );
+            card.innerHTML = `
 
+                <div class="resource-icon">
+                    ${resource.icon || "📚"}
+                </div>
+
+                <div class="resource-content">
+
+                    <span class="resource-type">
+                        ${resource.type || "Resource"}
+                    </span>
+
+                    <h3>
+                        ${resource.title || "Untitled Resource"}
+                    </h3>
+
+                    <p>
+                        ${resource.description || ""}
+                    </p>
+
+                    <a
+                        href="resource.html?id=${resource.id}"
+                        class="resource-link"
+                    >
+                        Explore Resource →
+                    </a>
+
+                </div>
+
+            `;
+
+
+            resourcesGrid.appendChild(card);
+
+        });
+
+    }
+
+
+    // =========================================
+    // FILTER BUTTONS
+    // =========================================
+
+    filterButtons.forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            filterButtons.forEach(btn => {
+                btn.classList.remove("active");
             });
 
+            button.classList.add("active");
 
-            button.classList.add(
-                "active"
-            );
+            activeFilter =
+                button.dataset.filter || "all";
+
+            renderResources();
+
+        });
+
+    });
 
 
-            currentResourceFilter =
-                button.dataset.filter;
+    // =========================================
+    // SEARCH
+    // =========================================
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "input",
+            renderResources
+        );
+
+    }
 
 
-            filterResources();
+    // =========================================
+    // INITIAL LOAD
+    // =========================================
 
-        }
-    );
+    renderResources();
 
 });
-
-
-// =========================================
-// START
-// =========================================
-
-loadResources();
-
