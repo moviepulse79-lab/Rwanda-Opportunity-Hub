@@ -230,29 +230,26 @@ const resourcesData = combinedOpportunities.filter(
             "totalResources"
         );
 
+if (total) {
+    total.textContent =
+        combinedOpportunities.length;
+}
 
-    if (total) {
-        total.textContent =
-    combinedOpportunities.length;
+if (jobs) {
+    jobs.textContent =
+        jobsData.length;
+}
 
-    if (jobs) {
+if (scholarship) {
+    scholarship.textContent =
+        scholarshipsData.length;
+}
 
-        jobs.textContent =
-            jobsData.length;
-    }
+if (resource) {
+    resource.textContent =
+        resourcesData.length;
+}
 
-    if (scholarship) {
-
-        scholarship.textContent =
-            scholarshipsData.length;
-    }
-
-    if (resource) {
-
-        resource.textContent =
-            resourcesData.length;
-    }
-    }
 
     // =========================================
     // CREATE OPPORTUNITY ROW
@@ -324,10 +321,15 @@ const resourcesData = combinedOpportunities.filter(
     // RECENT OPPORTUNITIES
     // =========================================
 
-    const recentItems =
+   const recent =
+    document.getElementById(
+        "recentOpportunities"
+    );
+
+const recentItems =
     combinedOpportunities.slice(0, 8);
 
-    if (recent) {
+if (recent) {
 
         if (recentItems.length === 0) {
 
