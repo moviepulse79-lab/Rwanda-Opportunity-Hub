@@ -804,11 +804,6 @@ const requestedType = params.get("type");
         // APPLY BUTTON
         // ======================================
 
-        const applyButton =
-            document.querySelector(
-                ".apply-button"
-            );
-
 
         if (applyButton) {
 
