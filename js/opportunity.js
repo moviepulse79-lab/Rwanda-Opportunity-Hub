@@ -992,25 +992,222 @@ const requestedType = params.get("type");
         }
 
 
-        // ======================================
-        // DEADLINE CARD
-        // ======================================
+   // ======================================
+// DEADLINE CARD + OPEN / CLOSED STATUS
+// ======================================
 
-        const deadlineStrong =
-            document.querySelector(
-                ".deadline-warning strong"
+const deadlineCard =
+    document.querySelector(
+        ".deadline-warning"
+    );
+
+const deadlineStrong =
+    document.querySelector(
+        ".deadline-warning strong"
+    );
+
+const deadlineSmall =
+    document.querySelector(
+        ".deadline-warning small"
+    );
+
+const deadlineLabel =
+    document.querySelector(
+        ".deadline-warning span"
+    );
+
+const applyButton =
+    document.querySelector(
+        ".apply-button"
+    );
+
+if (deadlineCard) {
+
+    const deadlineValue =
+        opportunity.deadline;
+
+    if (deadlineValue) {
+
+        const deadlineDate =
+            new Date(deadlineValue);
+
+        // Set deadline date
+        if (deadlineStrong) {
+
+            deadlineStrong.textContent =
+                formatDate(deadlineValue);
+
+        }
+
+        // Check whether deadline has passed
+        const now =
+            new Date();
+
+        // Compare dates only
+        const today =
+            new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate()
             );
+
+        const deadlineDay =
+            new Date(
+                deadlineDate.getFullYear(),
+                deadlineDate.getMonth(),
+                deadlineDate.getDate()
+            );
+
+        const isClosed =
+            deadlineDay < today;
+
+        if (isClosed) {
+
+            // ==================================
+            // CLOSED
+            // ==================================
+
+            deadlineCard.classList.add(
+                "deadline-closed"
+            );
+
+            deadlineCard.classList.remove(
+                "deadline-open"
+            );
+
+            if (deadlineLabel) {
+
+                deadlineLabel.textContent =
+                    "APPLICATION CLOSED";
+
+            }
+
+            if (deadlineSmall) {
+
+                deadlineSmall.textContent =
+                    "This opportunity has expired.";
+
+            }
+
+            if (applyButton) {
+
+                applyButton.removeAttribute(
+                    "href"
+                );
+
+                applyButton.removeAttribute(
+                    "target"
+                );
+
+                applyButton.removeAttribute(
+                    "rel"
+                );
+
+                applyButton.textContent =
+                    "Application Closed";
+
+                applyButton.classList.add(
+                    "disabled"
+                );
+
+                applyButton.setAttribute(
+                    "aria-disabled",
+                    "true"
+                );
+
+                applyButton.onclick =
+                    (event) => {
+                        event.preventDefault();
+                    };
+
+            }
+
+        } else {
+
+            // ==================================
+            // OPEN
+            // ==================================
+
+            deadlineCard.classList.add(
+                "deadline-open"
+            );
+
+            deadlineCard.classList.remove(
+                "deadline-closed"
+            );
+
+            if (deadlineLabel) {
+
+                deadlineLabel.textContent =
+                    "APPLICATION DEADLINE";
+
+            }
+
+            if (deadlineSmall) {
+
+                const difference =
+                    deadlineDay.getTime() -
+                    today.getTime();
+
+                const daysRemaining =
+                    Math.ceil(
+                        difference /
+                        (1000 * 60 * 60 * 24)
+                    );
+
+                if (daysRemaining === 0) {
+
+                    deadlineSmall.textContent =
+                        "Deadline is today";
+
+                } else if (
+                    daysRemaining === 1
+                ) {
+
+                    deadlineSmall.textContent =
+                        "1 day remaining";
+
+                } else {
+
+                    deadlineSmall.textContent =
+                        `${daysRemaining} days remaining`;
+
+                }
+
+            }
+
+        }
+
+    } else {
+
+        // ==================================
+        // NO DEADLINE
+        // ==================================
 
         if (deadlineStrong) {
 
             deadlineStrong.textContent =
-                opportunity.deadline
-                    ? formatDate(
-                        opportunity.deadline
-                    )
-                    : "No deadline specified";
+                "No deadline specified";
 
         }
+
+        if (deadlineLabel) {
+
+            deadlineLabel.textContent =
+                "APPLICATION DEADLINE";
+
+        }
+
+        if (deadlineSmall) {
+
+            deadlineSmall.textContent =
+                "Check the official opportunity details.";
+
+        }
+
+    }
+
+}
 
 
         // ======================================
