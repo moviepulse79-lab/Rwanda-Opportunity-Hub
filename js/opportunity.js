@@ -800,38 +800,55 @@ const requestedType = params.get("type");
         }
 
 
-        // ======================================
-        // APPLY BUTTON
-        // ======================================
+// ======================================
+// APPLY BUTTON
+// ======================================
 
+const deadlineApplyButton =
+    document.querySelector(
+        ".apply-button"
+    );
 
-        if (deadlineApplyButton) {
+if (deadlineApplyButton) {
 
-            if (
-                opportunity.link &&
-                opportunity.link !== "#"
-            ) {
+    if (
+        opportunity.link &&
+        opportunity.link !== "#"
+    ) {
 
-                deadlineApplyButton.href =
-                    opportunity.link;
+        deadlineApplyButton.href =
+            opportunity.link;
 
-                deadlineApplyButton.target =
-                    "_blank";
+        deadlineApplyButton.target =
+            "_blank";
 
-                deadlineApplyButton.rel =
-                    "noopener noreferrer";
+        deadlineApplyButton.rel =
+            "noopener noreferrer";
 
-                deadlineApplyButton.style.display =
-                    "";
+        deadlineApplyButton.textContent =
+            "Apply Now →";
 
-            } else {
+        deadlineApplyButton.style.display =
+            "";
 
-               deadlineApplyButton.style.display =
-                    "none";
+        deadlineApplyButton.classList.remove(
+            "disabled"
+        );
 
-            }
+        deadlineApplyButton.removeAttribute(
+            "aria-disabled"
+        );
 
-        }
+        deadlineApplyButton.onclick = null;
+
+    } else {
+
+        deadlineApplyButton.style.display =
+            "none";
+
+    }
+
+}
 
 
         // ======================================
