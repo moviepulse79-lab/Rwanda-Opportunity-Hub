@@ -991,10 +991,7 @@ const requestedType = params.get("type");
 // DEADLINE CARD + OPEN / CLOSED STATUS
 // ======================================
 
-const deadlineCard =
-    document.querySelector(
-        ".deadline-warning"
-    );
+
 
 const deadlineStrong =
     document.querySelector(
