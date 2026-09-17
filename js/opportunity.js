@@ -804,10 +804,7 @@ const requestedType = params.get("type");
 // APPLY BUTTON
 // ======================================
 
-const deadlineApplyButton =
-    document.querySelector(
-        ".apply-button"
-    );
+
 
 if (deadlineApplyButton) {
 
@@ -1006,8 +1003,7 @@ if (deadlineApplyButton) {
 // APPLY BUTTON REFERENCE
 // ======================================
 
-const deadlineApplyButton =
-    document.querySelector(".apply-button");
+
 
 
 // ======================================
