@@ -805,28 +805,28 @@ const requestedType = params.get("type");
         // ======================================
 
 
-        if (applyButton) {
+        if (deadlineApplyButton) {
 
             if (
                 opportunity.link &&
                 opportunity.link !== "#"
             ) {
 
-                applyButton.href =
+                deadlineApplyButton.href =
                     opportunity.link;
 
-                applyButton.target =
+                deadlineApplyButton.target =
                     "_blank";
 
-                applyButton.rel =
+                deadlineApplyButton.rel =
                     "noopener noreferrer";
 
-                applyButton.style.display =
+                deadlineApplyButton.style.display =
                     "";
 
             } else {
 
-                applyButton.style.display =
+               deadlineApplyButton.style.display =
                     "none";
 
             }
@@ -1087,25 +1087,25 @@ if (opportunity.deadline) {
 
             if (deadlineApplyButton) {
 
-                applyButton.removeAttribute("href");
+                deadlineApplyButton.removeAttribute("href");
 
-                applyButton.removeAttribute("target");
+              deadlineApplyButton.removeAttribute("target");
 
-                applyButton.removeAttribute("rel");
+                deadlineApplyButton.removeAttribute("rel");
 
-                applyButton.textContent =
+                deadlineApplyButton.textContent =
                     "Application Closed";
 
-                applyButton.classList.add(
+                deadlineApplyButton.classList.add(
                     "disabled"
                 );
 
-                applyButton.setAttribute(
+              deadlineApplyButton.setAttribute(
                     "aria-disabled",
                     "true"
                 );
 
-                applyButton.onclick =
+                deadlineApplyButton.onclick =
                     function (event) {
 
                         event.preventDefault();
