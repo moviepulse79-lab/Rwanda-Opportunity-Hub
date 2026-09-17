@@ -736,3 +736,29 @@
         line-height: 1.7;
     }
 }
+/* ==========================================
+   OPPORTUNITY DEADLINE STATUS
+========================================== */
+
+.deadline-warning.deadline-open {
+    border-left: 4px solid #087f5b;
+}
+
+.deadline-warning.deadline-closed {
+    border-left: 4px solid #d93025;
+    opacity: 0.95;
+}
+
+.deadline-warning.deadline-closed span {
+    color: #d93025;
+}
+
+.deadline-warning.deadline-closed strong {
+    color: #d93025;
+}
+
+.apply-button.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+}
