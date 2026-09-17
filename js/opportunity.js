@@ -985,6 +985,12 @@ const requestedType = params.get("type");
                     : `Explore opportunities from ${opportunity.organization || "this organization"}.`;
 
         }
+     // ======================================
+// APPLY BUTTON REFERENCE
+// ======================================
+
+const deadlineApplyButton =
+    document.querySelector(".apply-button");
 
 
 // ======================================
@@ -1079,7 +1085,7 @@ if (opportunity.deadline) {
             }
 
 
-            if (applyButton) {
+            if (deadlineApplyButton) {
 
                 applyButton.removeAttribute("href");
 
