@@ -987,55 +987,44 @@ const requestedType = params.get("type");
         }
 
 
-   // ======================================
-// DEADLINE CARD + OPEN / CLOSED STATUS
+// ======================================
+// DEADLINE STATUS
 // ======================================
 
+const deadlineCardElement =
+    document.querySelector(".deadline-warning");
+
+const deadlineStrongElement =
+    document.querySelector(".deadline-warning strong");
+
+const deadlineSmallElement =
+    document.querySelector(".deadline-warning small");
+
+const deadlineLabelElement =
+    document.querySelector(".deadline-warning span");
 
 
-const deadlineStrong =
-    document.querySelector(
-        ".deadline-warning strong"
-    );
+// Show deadline date
+if (deadlineStrongElement) {
 
-const deadlineSmall =
-    document.querySelector(
-        ".deadline-warning small"
-    );
+    deadlineStrongElement.textContent =
+        opportunity.deadline
+            ? formatDate(opportunity.deadline)
+            : "No deadline specified";
 
-const deadlineLabel =
-    document.querySelector(
-        ".deadline-warning span"
-    );
+}
 
-const applyButton =
-    document.querySelector(
-        ".apply-button"
-    );
 
-if (deadlineCard) {
+// Check deadline status
+if (opportunity.deadline) {
 
-    const deadlineValue =
-        opportunity.deadline;
+    const parsedDeadline =
+        new Date(opportunity.deadline);
 
-    if (deadlineValue) {
+    if (!Number.isNaN(parsedDeadline.getTime())) {
 
-        const deadlineDate =
-            new Date(deadlineValue);
+        const now = new Date();
 
-        // Set deadline date
-        if (deadlineStrong) {
-
-            deadlineStrong.textContent =
-                formatDate(deadlineValue);
-
-        }
-
-        // Check whether deadline has passed
-        const now =
-            new Date();
-
-        // Compare dates only
         const today =
             new Date(
                 now.getFullYear(),
@@ -1045,55 +1034,58 @@ if (deadlineCard) {
 
         const deadlineDay =
             new Date(
-                deadlineDate.getFullYear(),
-                deadlineDate.getMonth(),
-                deadlineDate.getDate()
+                parsedDeadline.getFullYear(),
+                parsedDeadline.getMonth(),
+                parsedDeadline.getDate()
             );
+
 
         const isClosed =
             deadlineDay < today;
 
+
+        // ======================================
+        // CLOSED
+        // ======================================
+
         if (isClosed) {
 
-            // ==================================
-            // CLOSED
-            // ==================================
+            if (deadlineCardElement) {
 
-            deadlineCard.classList.add(
-                "deadline-closed"
-            );
+                deadlineCardElement.classList.add(
+                    "deadline-closed"
+                );
 
-            deadlineCard.classList.remove(
-                "deadline-open"
-            );
+                deadlineCardElement.classList.remove(
+                    "deadline-open"
+                );
 
-            if (deadlineLabel) {
+            }
 
-                deadlineLabel.textContent =
+
+            if (deadlineLabelElement) {
+
+                deadlineLabelElement.textContent =
                     "APPLICATION CLOSED";
 
             }
 
-            if (deadlineSmall) {
 
-                deadlineSmall.textContent =
+            if (deadlineSmallElement) {
+
+                deadlineSmallElement.textContent =
                     "This opportunity has expired.";
 
             }
 
+
             if (applyButton) {
 
-                applyButton.removeAttribute(
-                    "href"
-                );
+                applyButton.removeAttribute("href");
 
-                applyButton.removeAttribute(
-                    "target"
-                );
+                applyButton.removeAttribute("target");
 
-                applyButton.removeAttribute(
-                    "rel"
-                );
+                applyButton.removeAttribute("rel");
 
                 applyButton.textContent =
                     "Application Closed";
@@ -1108,60 +1100,73 @@ if (deadlineCard) {
                 );
 
                 applyButton.onclick =
-                    (event) => {
+                    function (event) {
+
                         event.preventDefault();
+
                     };
 
             }
 
-        } else {
+        }
 
-            // ==================================
-            // OPEN
-            // ==================================
 
-            deadlineCard.classList.add(
-                "deadline-open"
-            );
+        // ======================================
+        // STILL OPEN
+        // ======================================
 
-            deadlineCard.classList.remove(
-                "deadline-closed"
-            );
+        else {
 
-            if (deadlineLabel) {
+            if (deadlineCardElement) {
 
-                deadlineLabel.textContent =
+                deadlineCardElement.classList.add(
+                    "deadline-open"
+                );
+
+                deadlineCardElement.classList.remove(
+                    "deadline-closed"
+                );
+
+            }
+
+
+            if (deadlineLabelElement) {
+
+                deadlineLabelElement.textContent =
                     "APPLICATION DEADLINE";
 
             }
 
-            if (deadlineSmall) {
 
-                const difference =
-                    deadlineDay.getTime() -
-                    today.getTime();
+            if (deadlineSmallElement) {
 
                 const daysRemaining =
                     Math.ceil(
-                        difference /
+                        (
+                            deadlineDay.getTime() -
+                            today.getTime()
+                        ) /
                         (1000 * 60 * 60 * 24)
                     );
 
+
                 if (daysRemaining === 0) {
 
-                    deadlineSmall.textContent =
+                    deadlineSmallElement.textContent =
                         "Deadline is today";
 
-                } else if (
-                    daysRemaining === 1
-                ) {
+                }
 
-                    deadlineSmall.textContent =
+                else if (daysRemaining === 1) {
+
+                    deadlineSmallElement.textContent =
                         "1 day remaining";
 
-                } else {
+                }
 
-                    deadlineSmall.textContent =
+                else {
+
+                    deadlineSmallElement.textContent =
                         `${daysRemaining} days remaining`;
 
                 }
@@ -1170,53 +1175,33 @@ if (deadlineCard) {
 
         }
 
-    } else {
-
-        // ==================================
-        // NO DEADLINE
-        // ==================================
-
-        if (deadlineStrong) {
-
-            deadlineStrong.textContent =
-                "No deadline specified";
-
-        }
-
-        if (deadlineLabel) {
-
-            deadlineLabel.textContent =
-                "APPLICATION DEADLINE";
-
-        }
-
-        if (deadlineSmall) {
-
-            deadlineSmall.textContent =
-                "Check the official opportunity details.";
-
-        }
-
     }
 
 }
 
 
-        // ======================================
-        // DEADLINE LABEL
-        // ======================================
+// ======================================
+// NO DEADLINE
+// ======================================
 
-        const deadlineLabel =
-            document.querySelector(
-                ".deadline-warning span"
-            );
+else {
 
-        if (deadlineLabel) {
+    if (deadlineLabelElement) {
 
-            deadlineLabel.textContent =
-                "APPLICATION DEADLINE";
+        deadlineLabelElement.textContent =
+            "APPLICATION DEADLINE";
 
-        }
+    }
+
+
+    if (deadlineSmallElement) {
+
+        deadlineSmallElement.textContent =
+            "Check the official opportunity details.";
+
+    }
+
+}
 
 
         // ======================================
