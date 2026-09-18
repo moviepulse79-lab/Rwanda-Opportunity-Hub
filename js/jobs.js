@@ -614,7 +614,7 @@ function filterJobs() {
         });
 
 
-    visibleJobs = 6;
+    visibleJobs = 24;
 
     displayJobs();
 
@@ -705,7 +705,7 @@ if (clearFilters) {
 
             filteredJobs = [...jobs];
 
-            visibleJobs = 6;
+            visibleJobs = 24;
 
             displayJobs();
 
@@ -725,7 +725,7 @@ if (loadMore) {
         "click",
         () => {
 
-            visibleJobs += 6;
+            visibleJobs += 24;
 
             displayJobs();
 
