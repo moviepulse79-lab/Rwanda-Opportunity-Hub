@@ -799,48 +799,48 @@ const requestedType = params.get("type");
 
         }
 
-
 // ======================================
 // APPLY BUTTON
 // ======================================
 
+const currentApplyButton =
+    document.querySelector(".apply-button");
 
-
-if (deadlineApplyButton) {
+if (currentApplyButton) {
 
     if (
         opportunity.link &&
         opportunity.link !== "#"
     ) {
 
-        deadlineApplyButton.href =
+        currentApplyButton.href =
             opportunity.link;
 
-        deadlineApplyButton.target =
+        currentApplyButton.target =
             "_blank";
 
-        deadlineApplyButton.rel =
+        currentApplyButton.rel =
             "noopener noreferrer";
 
-        deadlineApplyButton.textContent =
+        currentApplyButton.textContent =
             "Apply Now →";
 
-        deadlineApplyButton.style.display =
+        currentApplyButton.style.display =
             "";
 
-        deadlineApplyButton.classList.remove(
+        currentApplyButton.classList.remove(
             "disabled"
         );
 
-        deadlineApplyButton.removeAttribute(
+        currentApplyButton.removeAttribute(
             "aria-disabled"
         );
 
-        deadlineApplyButton.onclick = null;
+        currentApplyButton.onclick = null;
 
     } else {
 
-        deadlineApplyButton.style.display =
+        currentApplyButton.style.display =
             "none";
 
     }
@@ -999,9 +999,7 @@ if (deadlineApplyButton) {
                     : `Explore opportunities from ${opportunity.organization || "this organization"}.`;
 
         }
-     // ======================================
-// APPLY BUTTON REFERENCE
-// ======================================
+
 
 
 
