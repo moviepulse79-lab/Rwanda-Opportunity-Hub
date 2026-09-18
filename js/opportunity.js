@@ -850,7 +850,7 @@ if (currentApplyButton) {
 
         // ======================================
         // APPLY NOTE
-        // ======================================
+        // =====================================
 
         const applyNote =
             document.querySelector(
