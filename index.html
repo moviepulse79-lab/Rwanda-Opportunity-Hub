@@ -611,7 +611,7 @@
                     Get new opportunities delivered to you.
                 </p>
 
-            <form class="newsletter" id="newsletterForm">
+        <form class="newsletter" id="newsletterForm">
 
     <input
         type="email"
@@ -619,12 +619,47 @@
         name="email"
         placeholder="Your email address"
         autocomplete="email"
-        required>
+        required
+    >
 
-    <button type="submit" id="newsletterButton">
+    <button
+        type="submit"
+        id="newsletterButton"
+        aria-label="Subscribe to newsletter"
+    >
         →
     </button>
 
+</form>
+
+<label
+    style="
+        display:flex;
+        align-items:flex-start;
+        gap:8px;
+        margin-top:10px;
+        font-size:12px;
+        line-height:1.5;
+        cursor:pointer;
+    "
+>
+    <input
+        type="checkbox"
+        id="newsletterConsent"
+        required
+        style="margin-top:3px;"
+    >
+
+    <span>
+        I agree to receive new opportunities and updates from
+        Rwanda Opportunity Hub. I can unsubscribe at any time.
+    </span>
+</label>
+
+<p
+    id="newsletterMessage"
+    style="margin-top:10px;font-size:14px;"
+></p>
 </form>
 
 <p
