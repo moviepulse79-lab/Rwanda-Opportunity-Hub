@@ -449,18 +449,26 @@
             </p>
 
 
-            <form class="newsletter">
+   <form class="newsletter" id="newsletterForm">
 
-                <input
-                    type="email"
-                    placeholder="Your email address"
-                >
+    <input
+        type="email"
+        id="newsletterEmail"
+        name="email"
+        placeholder="Your email address"
+        autocomplete="email"
+        required>
 
-                <button type="submit">
-                    →
-                </button>
+    <button type="submit" id="newsletterButton">
+        →
+    </button>
 
-            </form>
+</form>
+
+<p
+    id="newsletterMessage"
+    style="margin-top:10px;font-size:14px;"
+></p>
 
         </div>
 
