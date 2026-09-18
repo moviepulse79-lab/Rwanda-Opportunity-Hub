@@ -18,7 +18,7 @@ const noResults = document.getElementById("noResults");
 
 let jobs = [];
 let filteredJobs = [];
-let visibleJobs = 6;
+let visibleJobs = 24;
 
 
 // =========================================
