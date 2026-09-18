@@ -1,138 +1,85 @@
-// =========================================
-// ROH NEWSLETTER SUBSCRIPTION
-// =========================================
-
 document.addEventListener("DOMContentLoaded", () => {
 
-    const newsletterForm =
-        document.getElementById("newsletterForm");
+    const form = document.getElementById("newsletterForm");
+    const emailInput = document.getElementById("newsletterEmail");
+    const consentInput = document.getElementById("newsletterConsent");
+    const button = document.getElementById("newsletterButton");
+    const message = document.getElementById("newsletterMessage");
 
-    const newsletterEmail =
-        document.getElementById("newsletterEmail");
+    if (!form) return;
 
-    const newsletterButton =
-        document.getElementById("newsletterButton");
+    form.addEventListener("submit", async (event) => {
 
-    const newsletterMessage =
-        document.getElementById("newsletterMessage");
+        event.preventDefault();
 
+        const email = emailInput.value.trim();
 
-    if (!newsletterForm) return;
+        if (!email) {
+            message.textContent = "Please enter your email address.";
+            return;
+        }
 
+        if (!consentInput.checked) {
+            message.textContent =
+                "Please confirm that you want to receive updates.";
+            return;
+        }
 
-    newsletterForm.addEventListener(
-        "submit",
-        async event => {
+        button.disabled = true;
+        button.textContent = "…";
 
-            event.preventDefault();
+        message.textContent = "Subscribing...";
 
+        try {
 
-            const email =
-                newsletterEmail.value
-                    .trim()
-                    .toLowerCase();
+            const response = await fetch(
+                "/.netlify/functions/subscribe",
+                {
+                    method: "POST",
 
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-            if (!email) {
-
-                newsletterMessage.textContent =
-                    "Please enter your email address.";
-
-                return;
-
-            }
-
-
-            if (!newsletterEmail.checkValidity()) {
-
-                newsletterMessage.textContent =
-                    "Please enter a valid email address.";
-
-                return;
-
-            }
-
-
-            newsletterButton.disabled = true;
-
-            newsletterButton.textContent =
-                "...";
-
-            newsletterMessage.textContent =
-                "Subscribing...";
-
-
-            try {
-
-                const {
-                    data,
-                    error
-                } = await window.supabaseClient
-
-                    .from("newsletter_subscribers")
-
-                    .insert([
-                        {
-                            email: email
-                        }
-                    ]);
-
-
-                if (error) {
-
-                    // Already subscribed
-                    if (
-                        error.code === "23505"
-                    ) {
-
-                        newsletterMessage.textContent =
-                            "You're already subscribed.";
-
-                    } else {
-
-                        console.error(
-                            "Newsletter subscription error:",
-                            error
-                        );
-
-                        newsletterMessage.textContent =
-                            "Something went wrong. Please try again.";
-
-                    }
-
-                    return;
-
+                    body: JSON.stringify({
+                        email: email
+                    })
                 }
+            );
 
+            const result = await response.json();
 
-                newsletterEmail.value = "";
-
-
-                newsletterMessage.textContent =
-                    "You're subscribed! 🎉";
-
-
-            } catch (error) {
-
-                console.error(
-                    "Newsletter error:",
-                    error
+            if (!response.ok) {
+                throw new Error(
+                    result.message ||
+                    "Unable to subscribe right now."
                 );
-
-                newsletterMessage.textContent =
-                    "Something went wrong. Please try again.";
-
-            } finally {
-
-                newsletterButton.disabled =
-                    false;
-
-                newsletterButton.textContent =
-                    "→";
-
             }
+
+            message.textContent =
+                "You're subscribed! 🎉";
+
+            emailInput.value = "";
+            consentInput.checked = false;
+
+        } catch (error) {
+
+            console.error(
+                "Newsletter subscription error:",
+                error
+            );
+
+            message.textContent =
+                error.message ||
+                "Something went wrong. Please try again.";
+
+        } finally {
+
+            button.disabled = false;
+            button.textContent = "→";
 
         }
-    );
+
+    });
 
 });
