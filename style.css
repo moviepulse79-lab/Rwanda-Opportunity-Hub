@@ -2625,3 +2625,44 @@ img {
     }
 
 }
+/* =========================
+   HERO VIDEO BACKGROUND
+========================= */
+
+.hero {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -3;
+}
+
+.hero-video-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.82),
+        rgba(0, 0, 0, 0.55),
+        rgba(0, 0, 0, 0.72)
+    );
+    z-index: -2;
+}
+
+.hero-background {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+}
+
+.hero-container {
+    position: relative;
+    z-index: 2;
+}
