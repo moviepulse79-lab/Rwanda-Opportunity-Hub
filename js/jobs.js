@@ -584,23 +584,30 @@ if (clearFilters) {
 
 }
 
-
 // =========================================
 // LOAD MORE
 // =========================================
 
 if (loadMore) {
 
-    loadMore.addEventListener(
-        "click",
-        () => {
+    const loadMoreContainer =
+        loadMore.closest(".load-more");
 
-            visibleJobs += 24;
+    if (filteredJobs.length > visibleJobs) {
 
-            displayJobs();
-
+        if (loadMoreContainer) {
+            loadMoreContainer.style.display = "flex";
         }
-    );
+
+        loadMore.style.display = "inline-flex";
+
+    } else {
+
+        if (loadMoreContainer) {
+            loadMoreContainer.style.display = "none";
+        }
+
+    }
 
 }
 
