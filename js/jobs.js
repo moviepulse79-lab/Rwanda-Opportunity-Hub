@@ -1,5 +1,5 @@
 // =========================================
-// ROH JOBS — SUPABASE + LIVE RWANDA API
+// ROH JOBS — SUPABASE LIVE JOBS
 // =========================================
 
 const jobsGrid = document.getElementById("jobsGrid");
@@ -22,103 +22,7 @@ let visibleJobs = 24;
 
 
 // =========================================
-// LOAD LIVE RWANDA JOBS API
-// =========================================
-
-async function loadApiJobs() {
-
-    try {
-
-        const response = await fetch(
-            "https://api.jobopportunitiesapi.org/public/jobs?country=RW&limit=50"
-        );
-
-        if (!response.ok) {
-            throw new Error("Jobs API request failed");
-        }
-
-        const result = await response.json();
-
-        console.log("LIVE RWANDA API JOBS:", result.data);
-
-        const apiJobs = (result.data || []).map(job => ({
-
-            id: `api-${job.id}`,
-
-            api_id: job.id,
-
-            slug: job.slug,
-
-            title: job.title || "Untitled Job",
-
-            organization:
-                job.company || "Company",
-
-            location:
-                job.location ||
-                job.city ||
-                "Rwanda",
-
-            experience:
-                job.seniority ||
-                "Not specified",
-
-            category:
-                job.category ||
-                "Other",
-
-            duration:
-                job.employment_type ||
-                "Job",
-
-            type: "job",
-
-            deadline:
-                job.deadline ||
-                "No deadline",
-
-            description:
-                job.description ||
-                "",
-
-            posted_date:
-                job.posted_at ||
-                null,
-
-            apply_url:
-                job.apply_url ||
-                "#",
-
-            company_logo:
-                job.company_logo ||
-                "",
-
-            source:
-                job.source ||
-                "Job Opportunities API",
-
-            isApiJob: true
-
-        }));
-
-        return apiJobs;
-
-    } catch (error) {
-
-        console.error(
-            "Rwanda Jobs API error:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
-
-
-// =========================================
-// LOAD SUPABASE + API JOBS
+// LOAD JOBS FROM SUPABASE
 // =========================================
 
 async function loadJobs() {
@@ -134,89 +38,29 @@ async function loadJobs() {
 
     try {
 
-        // -----------------------------
-        // SUPABASE JOBS
-        // -----------------------------
-
         const {
-            data: supabaseJobs,
+            data,
             error
         } = await supabaseClient
             .from("opportunities")
             .select("*")
             .eq("type", "job")
+            .neq("status", "closed")
             .order("created_at", {
                 ascending: false
             });
 
-
         if (error) {
-
-            console.error(
-                "Supabase jobs error:",
-                error
-            );
-
+            throw error;
         }
 
-
-        // -----------------------------
-        // LIVE API JOBS
-        // -----------------------------
-
-        const apiJobs =
-            await loadApiJobs();
-
-
-        // -----------------------------
-        // COMBINE BOTH
-        // -----------------------------
-
-        jobs = [
-            ...(apiJobs || []),
-            ...(supabaseJobs || [])
-        ];
-
-
-        // Remove duplicates by title + organization
-
-        const uniqueJobs = [];
-
-        const seen = new Set();
-
-        jobs.forEach(job => {
-
-            const key =
-                `${(job.title || "").toLowerCase()}-${(job.organization || "").toLowerCase()}`;
-
-            if (!seen.has(key)) {
-
-                seen.add(key);
-
-                uniqueJobs.push(job);
-
-            }
-
-        });
-
-
-        jobs = uniqueJobs;
+        jobs = data || [];
 
         filteredJobs = [...jobs];
 
         console.log(
-            "TOTAL ROH JOBS:",
+            "ROH JOBS LOADED:",
             jobs.length
-        );
-
-        console.log(
-            "API JOBS:",
-            apiJobs.length
-        );
-
-        console.log(
-            "SUPABASE JOBS:",
-            supabaseJobs?.length || 0
         );
 
         displayJobs();
@@ -235,6 +79,10 @@ async function loadJobs() {
             </div>
         `;
 
+        if (jobsCount) {
+            jobsCount.textContent = "0";
+        }
+
     }
 
 }
@@ -251,7 +99,10 @@ function displayJobs() {
     jobsGrid.innerHTML = "";
 
     const jobsToShow =
-        filteredJobs.slice(0, visibleJobs);
+        filteredJobs.slice(
+            0,
+            visibleJobs
+        );
 
 
     // COUNT
@@ -276,8 +127,10 @@ function displayJobs() {
         `;
 
         if (loadMore) {
+
             loadMore.parentElement.style.display =
                 "none";
+
         }
 
         return;
@@ -297,7 +150,6 @@ function displayJobs() {
 
         const organization =
             job.organization ||
-            job.company ||
             "Company";
 
 
@@ -307,154 +159,115 @@ function displayJobs() {
                 .toUpperCase();
 
 
-        // API JOB
-
-        if (job.isApiJob) {
-
-            const applyUrl =
-                job.apply_url || "#";
+        const location =
+            job.location ||
+            "Rwanda";
 
 
-            card.innerHTML = `
+        const experience =
+            job.experience ||
+            "Not specified";
 
-                <div class="job-card-top">
 
-                    <div class="company-logo">
+        const category =
+            job.category ||
+            "Job";
 
-                        ${
-                            job.company_logo
-                                ? `<img
-                                    src="${job.company_logo}"
-                                    alt="${organization}"
-                                    style="width:100%;height:100%;object-fit:contain;border-radius:inherit;"
-                                  >`
-                                : firstLetter
-                        }
 
-                    </div>
+        const jobType =
+            job.employment_type ||
+            job.duration ||
+            "Job";
 
-                    <span class="verified-badge">
-                        ✓ Verified
-                    </span>
+
+        const deadline =
+            job.deadline
+                ? `Deadline: ${formatDate(job.deadline)}`
+                : "No deadline";
+
+
+        card.innerHTML = `
+
+            <div class="job-card-top">
+
+                <div class="company-logo">
+
+                    ${
+                        job.company_logo
+                            ? `
+                                <img
+                                    src="${escapeHtml(job.company_logo)}"
+                                    alt="${escapeHtml(organization)}"
+                                    style="
+                                        width:100%;
+                                        height:100%;
+                                        object-fit:contain;
+                                        border-radius:inherit;
+                                    "
+                                >
+                              `
+                            : escapeHtml(firstLetter)
+                    }
 
                 </div>
 
 
-                <span class="job-type-badge">
-                    ${job.category || "Job"}
+                <span class="verified-badge">
+                    ✓ Verified
+                </span>
+
+            </div>
+
+
+            <span class="job-type-badge">
+                ${escapeHtml(category)}
+            </span>
+
+
+            <h3>
+                ${escapeHtml(
+                    job.title ||
+                    "Untitled Job"
+                )}
+            </h3>
+
+
+            <p class="job-company">
+                ${escapeHtml(organization)}
+            </p>
+
+
+            <div class="job-meta">
+
+                <span>
+                    📍 ${escapeHtml(location)}
+                </span>
+
+                <span>
+                    🎓 ${escapeHtml(experience)}
+                </span>
+
+            </div>
+
+
+            <div class="job-card-bottom">
+
+                <span class="deadline">
+
+                    ${escapeHtml(deadline)}
+
                 </span>
 
 
-                <h3>
-                    ${job.title}
-                </h3>
+                <a
+                    href="opportunity.html?id=${encodeURIComponent(job.id)}&type=job"
+                >
+                    View Job →
+                </a>
 
+            </div>
 
-                <p class="job-company">
-                    ${organization}
-                </p>
-
-
-                <div class="job-meta">
-
-                    <span>
-                        📍 ${job.location}
-                    </span>
-
-                    <span>
-                        🎓 ${job.experience}
-                    </span>
-
-                </div>
-
-
-                <div class="job-card-bottom">
-
-                    <span class="deadline">
-                        ${job.posted_date
-                            ? `Posted: ${formatDate(job.posted_date)}`
-                            : "Recently posted"
-                        }
-                    </span>
-
-
-                    <a href="opportunity.html?apiJob=${encodeURIComponent(job.slug || job.api_id)}">
-    View Job →
-</a>
-
-                </div>
-
-            `;
-
-        }
-
-
-        // SUPABASE JOB
-
-        else {
-
-            card.innerHTML = `
-
-                <div class="job-card-top">
-
-                    <div class="company-logo">
-                        ${firstLetter}
-                    </div>
-
-                    <span class="verified-badge">
-                        ✓ Verified
-                    </span>
-
-                </div>
-
-
-                <span class="job-type-badge">
-                    ${job.category || "Job"}
-                </span>
-
-
-                <h3>
-                    ${job.title || "Untitled Job"}
-                </h3>
-
-
-                <p class="job-company">
-                    ${organization}
-                </p>
-
-
-                <div class="job-meta">
-
-                    <span>
-                        📍 ${job.location || "Rwanda"}
-                    </span>
-
-                    <span>
-                        🎓 ${job.experience || "Not specified"}
-                    </span>
-
-                </div>
-
-
-                <div class="job-card-bottom">
-
-                    <span class="deadline">
-                        Deadline:
-                        ${job.deadline || "No deadline"}
-                    </span>
-
-
-                    <a
-                        href="opportunity.html?id=${job.id}&type=job"
-                    >
-                        View Job →
-                    </a>
-
-                </div>
-
-            `;
-
-        }
+        `;
 
 
         jobsGrid.appendChild(card);
@@ -466,7 +279,10 @@ function displayJobs() {
 
     if (loadMore) {
 
-        if (filteredJobs.length > visibleJobs) {
+        if (
+            filteredJobs.length >
+            visibleJobs
+        ) {
 
             loadMore.parentElement.style.display =
                 "flex";
@@ -489,22 +305,50 @@ function displayJobs() {
 
 function formatDate(date) {
 
+    if (!date) {
+        return "";
+    }
+
     try {
 
-        return new Date(date).toLocaleDateString(
-            "en-RW",
-            {
-                day: "numeric",
-                month: "short",
-                year: "numeric"
-            }
-        );
+        return new Date(date)
+            .toLocaleDateString(
+                "en-RW",
+                {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric"
+                }
+            );
 
     } catch {
 
         return date;
 
     }
+
+}
+
+
+// =========================================
+// ESCAPE HTML
+// =========================================
+
+function escapeHtml(value) {
+
+    if (value === null ||
+        value === undefined) {
+
+        return "";
+
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
 }
 
@@ -517,27 +361,37 @@ function filterJobs() {
 
     const search =
         jobSearch
-            ? jobSearch.value.toLowerCase().trim()
+            ? jobSearch.value
+                .toLowerCase()
+                .trim()
             : "";
+
 
     const location =
         locationFilter
-            ? locationFilter.value.toLowerCase()
+            ? locationFilter.value
+                .toLowerCase()
             : "";
+
 
     const type =
         typeFilter
-            ? typeFilter.value.toLowerCase()
+            ? typeFilter.value
+                .toLowerCase()
             : "";
+
 
     const experience =
         experienceFilter
-            ? experienceFilter.value.toLowerCase()
+            ? experienceFilter.value
+                .toLowerCase()
             : "";
+
 
     const category =
         categoryFilter
-            ? categoryFilter.value.toLowerCase()
+            ? categoryFilter.value
+                .toLowerCase()
             : "";
 
 
@@ -548,28 +402,39 @@ function filterJobs() {
                 (job.title || "")
                     .toLowerCase();
 
+
             const organization =
                 (job.organization || "")
                     .toLowerCase();
 
+
             const description =
-                (job.description || "")
-                    .toLowerCase();
+                (
+                    job.description ||
+                    job.full_description ||
+                    ""
+                )
+                .toLowerCase();
+
 
             const jobLocation =
                 (job.location || "")
                     .toLowerCase();
 
+
             const jobType =
                 (
+                    job.employment_type ||
                     job.duration ||
-                    job.type ||
                     ""
-                ).toLowerCase();
+                )
+                .toLowerCase();
+
 
             const jobExperience =
                 (job.experience || "")
                     .toLowerCase();
+
 
             const jobCategory =
                 (job.category || "")
@@ -622,7 +487,7 @@ function filterJobs() {
 
 
 // =========================================
-// SEARCH
+// SEARCH BUTTON
 // =========================================
 
 if (jobSearchButton) {
@@ -634,6 +499,10 @@ if (jobSearchButton) {
 
 }
 
+
+// =========================================
+// ENTER TO SEARCH
+// =========================================
 
 if (jobSearch) {
 
@@ -703,7 +572,8 @@ if (clearFilters) {
                 categoryFilter.value = "";
 
 
-            filteredJobs = [...jobs];
+            filteredJobs =
+                [...jobs];
 
             visibleJobs = 24;
 
