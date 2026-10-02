@@ -1,4 +1,4 @@
-// =========================================
+// ======================================
 // ROH JOBS — SUPABASE LIVE JOBS
 // =========================================
 
@@ -38,17 +38,12 @@ async function loadJobs() {
 
     try {
 
-        const {
-            data,
-            error
-        } = await supabaseClient
-            .from("opportunities")
-            .select("*")
-            .eq("type", "job")
-            .neq("status", "closed")
-            .order("created_at", {
-                ascending: false
-            });
+       const { data, error } = await supabaseClient
+    .from("opportunities")
+    .select("*")
+    .eq("type", "job")
+    .or("status.is.null,status.neq.closed")
+    .order("created_at", { ascending: false });
 
         if (error) {
             throw error;
