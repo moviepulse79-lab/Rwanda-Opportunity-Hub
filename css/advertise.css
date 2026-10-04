@@ -25,7 +25,7 @@
     --roh-shadow:
         0 15px 45px rgba(4, 54, 39, 0.07);
 }
-
+ 
 /* =========================================================
    GLOBAL
 ========================================================= */
@@ -54,10 +54,48 @@ textarea {
     font-family: "Inter", Arial, sans-serif;
 }
 
+
+
 /* =========================================================
-   HERO
+   ADVERTISE HERO VIDEO
 ========================================================= */
 
+.advertise-hero {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.advertise-hero-video {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    z-index: -3;
+
+    pointer-events: none;
+}
+
+.advertise-hero-overlay {
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(2, 38, 28, 0.92) 0%,
+            rgba(3, 61, 45, 0.78) 45%,
+            rgba(3, 61, 45, 0.70) 100%
+        );
+
+    z-index: -2;
+
+    pointer-events: none;
+}
 .advertise-hero {
     position: relative;
     min-height: 570px;
@@ -84,6 +122,10 @@ textarea {
             #087f5b 100%
         );
 }
+
+/* =========================================================
+   HERO
+========================================================= */
 
 /* soft moving glow */
 
