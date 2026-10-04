@@ -29,6 +29,31 @@
 
 <script src="https://5gvci.com/act/files/tag.min.js?z=11853504" data-cfasync="false" async></script>
 <body data-page="jobs">
+    <!-- =========================
+     STICKY VIDEO AD
+========================== -->
+
+<div class="sticky-video-ad" id="stickyVideoAd">
+
+    <video autoplay muted loop playsinline preload="auto">
+        <source src="assets/advert.mp4" type="video/mp4">
+    </video>
+
+    <button
+        class="sticky-video-close"
+        id="stickyVideoClose"
+        aria-label="Close advertisement"
+    >
+        ×
+    </button>
+
+</div>
+
+<!-- =========================
+     NAVBAR
+========================== -->
+
+<header class="navbar">
 
     <!-- =================================
          NAVBAR
@@ -652,6 +677,19 @@
     <script src="js/newsletter.js"></script>
 <script src="js/ads.js"></script>
 <script src="js/jobs.js"></script>
+
+    <script>
+    const stickyVideoAd = document.getElementById("stickyVideoAd");
+    const stickyVideoClose = document.getElementById("stickyVideoClose");
+
+    if (stickyVideoClose && stickyVideoAd) {
+        stickyVideoClose.addEventListener("click", () => {
+            stickyVideoAd.remove();
+
+            document.querySelector(".navbar").style.marginTop = "0";
+        });
+    }
+</script>
 
 </body>
 
