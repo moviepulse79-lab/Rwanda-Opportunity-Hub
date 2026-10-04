@@ -270,23 +270,25 @@ function displayJobs() {
     });
 
 
-    // LOAD MORE
+// LOAD MORE
 
-    if (loadMore) {
+if (loadMore) {
 
-        if (
-            filteredJobs.length >
-            visibleJobs
-        ) {
+    const loadMoreContainer =
+        loadMore.closest(".load-more");
 
-            loadMore.parentElement.style.display =
-                "flex";
+    if (filteredJobs.length > visibleJobs) {
 
-        } else {
+        if (loadMoreContainer) {
+            loadMoreContainer.style.display = "flex";
+        }
 
-            loadMore.parentElement.style.display =
-                "none";
+        loadMore.style.display = "inline-flex";
 
+    } else {
+
+        if (loadMoreContainer) {
+            loadMoreContainer.style.display = "none";
         }
 
     }
@@ -579,33 +581,22 @@ if (clearFilters) {
 
 }
 
+
 // =========================================
-// LOAD MORE
+// LOAD MORE BUTTON
 // =========================================
 
 if (loadMore) {
 
-    const loadMoreContainer =
-        loadMore.closest(".load-more");
+    loadMore.addEventListener("click", () => {
 
-    if (filteredJobs.length > visibleJobs) {
+        visibleJobs += 24;
 
-        if (loadMoreContainer) {
-            loadMoreContainer.style.display = "flex";
-        }
+        displayJobs();
 
-        loadMore.style.display = "inline-flex";
-
-    } else {
-
-        if (loadMoreContainer) {
-            loadMoreContainer.style.display = "none";
-        }
-
-    }
+    });
 
 }
-
 
 // =========================================
 // START
