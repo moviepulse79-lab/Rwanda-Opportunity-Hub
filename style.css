@@ -2666,54 +2666,6 @@ img {
     position: relative;
     z-index: 2;
 }
-/* =========================
-   STICKY VIDEO AD
-========================== */
-
-.sticky-video-ad {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 90px;
-    background: #000;
-    z-index: 99999;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
-}
-
-.sticky-video-ad video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-}
-
-.sticky-video-close {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    width: 30px;
-    height: 30px;
-    border: none;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
-    font-size: 22px;
-    line-height: 30px;
-    text-align: center;
-    cursor: pointer;
-    z-index: 2;
-    transition: 0.2s ease;
-}
-
-.sticky-video-close:hover {
-    background: #087f5b;
-    transform: scale(1.08);
-}
 
 /* Push the navbar below the sticky ad */
 
