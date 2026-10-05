@@ -1,16 +1,7 @@
 /* ================================
-   SCHOLARSHIP HERO - RWANDAIR
+   SOFT / UNFOCUSED RWANDAIR HERO
 ================================ */
 
-.scholarship-hero {
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-    min-height: 520px;
-    background: #063d2d;
-}
-
-/* Moving airplane image */
 .scholarship-airplane {
     position: absolute;
     inset: 0;
@@ -22,18 +13,23 @@
     position: absolute;
     top: 50%;
     left: -8%;
+
     width: 116%;
     height: 116%;
+
     object-fit: cover;
 
-    transform: translate3d(0, -50%, 0) scale(1.05);
+    /* Soft, slightly blurred background */
+    filter: blur(2px) brightness(0.62) saturate(0.75);
+    
+    transform: translate3d(0, -50%, 0) scale(1.06);
 
-    animation: airplaneMove 18s ease-in-out infinite alternate;
+    animation: airplaneSoftMove 20s ease-in-out infinite alternate;
 
     will-change: transform;
 }
 
-/* Dark green overlay for readable text */
+/* Dark, calm overlay */
 .scholarship-hero-overlay {
     position: absolute;
     inset: 0;
@@ -42,16 +38,15 @@
     background:
         linear-gradient(
             90deg,
-            rgba(2, 45, 33, 0.94) 0%,
-            rgba(3, 61, 45, 0.72) 42%,
-            rgba(3, 61, 45, 0.42) 72%,
-            rgba(3, 61, 45, 0.62) 100%
+            rgba(2, 40, 30, 0.94) 0%,
+            rgba(3, 55, 42, 0.82) 45%,
+            rgba(3, 55, 42, 0.68) 100%
         );
 
     pointer-events: none;
 }
 
-/* Soft cinematic lighting */
+/* Very subtle depth */
 .scholarship-hero::after {
     content: "";
     position: absolute;
@@ -60,76 +55,49 @@
 
     background:
         radial-gradient(
-            circle at 75% 45%,
-            rgba(245, 197, 66, 0.12),
-            transparent 32%
+            circle at 75% 50%,
+            rgba(255,255,255,0.035),
+            transparent 38%
         );
 
     pointer-events: none;
 }
 
-/* Airplane movement */
-@keyframes airplaneMove {
+/* Slow, barely noticeable movement */
+@keyframes airplaneSoftMove {
 
     0% {
         transform:
             translate3d(-2%, -50%, 0)
-            scale(1.05);
-    }
-
-    50% {
-        transform:
-            translate3d(2%, -50%, 0)
-            scale(1.08);
+            scale(1.06);
     }
 
     100% {
         transform:
-            translate3d(7%, -50%, 0)
-            scale(1.11);
+            translate3d(5%, -50%, 0)
+            scale(1.10);
     }
 }
 
-/* Keep hero content above everything */
-.scholarship-hero .hero-content,
-.scholarship-hero .container {
-    position: relative;
-    z-index: 5;
-}
-
-/* Mobile */
 @media (max-width: 768px) {
 
-    .scholarship-hero {
-        min-height: 500px;
-    }
-
     .scholarship-airplane img {
-        width: 145%;
+        width: 140%;
         height: 120%;
-        left: -20%;
+        left: -18%;
 
-        animation-duration: 14s;
-    }
+        filter: blur(2.5px) brightness(0.58) saturate(0.7);
 
-    .scholarship-hero-overlay {
-        background:
-            linear-gradient(
-                90deg,
-                rgba(2, 45, 33, 0.94),
-                rgba(3, 61, 45, 0.68)
-            );
+        animation-duration: 16s;
     }
 }
 
-/* Respect accessibility */
 @media (prefers-reduced-motion: reduce) {
 
     .scholarship-airplane img {
         animation: none;
     }
 }
-
 .scholarship-hero h1 {
     margin-top: 12px;
 
