@@ -165,28 +165,6 @@ jobsToShow.forEach(job => {
             : "No deadline";
 
 
-    // =====================================
-    // SHORT DESCRIPTION FOR CARD
-    // =====================================
-
-    const rawDescription =
-        job.description ||
-        job.full_description ||
-        job.summary ||
-        "";
-
-    const cleanDescription =
-        String(rawDescription)
-            .replace(/<[^>]*>/g, " ")
-            .replace(/\s+/g, " ")
-            .trim();
-
-    const shortDescription =
-        cleanDescription.length > 140
-            ? cleanDescription.substring(0, 140).trim() + "..."
-            : cleanDescription;
-
-
     card.innerHTML = `
 
         <div class="job-card-top">
@@ -236,17 +214,6 @@ jobsToShow.forEach(job => {
         </p>
 
 
-        ${
-            shortDescription
-                ? `
-                    <p class="job-description-preview">
-                        ${escapeHtml(shortDescription)}
-                    </p>
-                  `
-                : ""
-        }
-
-
         <div class="job-meta">
 
             <span>
@@ -279,6 +246,8 @@ jobsToShow.forEach(job => {
     jobsGrid.appendChild(card);
 
 });
+
+
 
 
 
