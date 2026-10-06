@@ -132,120 +132,154 @@ function displayJobs() {
     // CREATE JOB CARDS
     // =====================================
 
-    jobsToShow.forEach(job => {
+jobsToShow.forEach(job => {
 
-        const card = document.createElement("article");
+    const card = document.createElement("article");
 
-        card.className = "job-card";
-
-
-        const organization =
-            job.organization || "Company";
+    card.className = "job-card";
 
 
-        const firstLetter =
-            organization.charAt(0).toUpperCase();
+    const organization =
+        job.organization || "Company";
 
 
-        const location =
-            job.location || "Rwanda";
+    const firstLetter =
+        organization.charAt(0).toUpperCase();
 
 
-        const experience =
-            job.experience || "Not specified";
+    const location =
+        job.location || "Rwanda";
 
 
-        const category =
-            job.category || "Job";
+    const experience =
+        job.experience || "Not specified";
 
 
-        const deadline =
-            job.deadline
-                ? `Deadline: ${formatDate(job.deadline)}`
-                : "No deadline";
+    const category =
+        job.category || "Job";
 
 
-        card.innerHTML = `
+    const deadline =
+        job.deadline
+            ? `Deadline: ${formatDate(job.deadline)}`
+            : "No deadline";
 
-            <div class="job-card-top">
 
-                <div class="company-logo">
+    // =====================================
+    // SHORT DESCRIPTION FOR CARD
+    // =====================================
 
-                    ${
-                        job.company_logo
-                            ? `
-                                <img
-                                    src="${escapeHtml(job.company_logo)}"
-                                    alt="${escapeHtml(organization)}"
-                                    style="
-                                        width:100%;
-                                        height:100%;
-                                        object-fit:contain;
-                                        border-radius:inherit;
-                                    "
-                                >
-                              `
-                            : escapeHtml(firstLetter)
-                    }
+    const rawDescription =
+        job.description ||
+        job.full_description ||
+        job.summary ||
+        "";
 
-                </div>
+    const cleanDescription =
+        String(rawDescription)
+            .replace(/<[^>]*>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
 
-                <span class="verified-badge">
-                    ✓ Verified
-                </span>
+    const shortDescription =
+        cleanDescription.length > 140
+            ? cleanDescription.substring(0, 140).trim() + "..."
+            : cleanDescription;
+
+
+    card.innerHTML = `
+
+        <div class="job-card-top">
+
+            <div class="company-logo">
+
+                ${
+                    job.company_logo
+                        ? `
+                            <img
+                                src="${escapeHtml(job.company_logo)}"
+                                alt="${escapeHtml(organization)}"
+                                style="
+                                    width:100%;
+                                    height:100%;
+                                    object-fit:contain;
+                                    border-radius:inherit;
+                                "
+                            >
+                          `
+                        : escapeHtml(firstLetter)
+                }
 
             </div>
 
-
-            <span class="job-type-badge">
-                ${escapeHtml(category)}
+            <span class="verified-badge">
+                ✓ Verified
             </span>
 
-
-            <h3>
-                ${escapeHtml(
-                    job.title || "Untitled Job"
-                )}
-            </h3>
+        </div>
 
 
-            <p class="job-company">
-                ${escapeHtml(organization)}
-            </p>
+        <span class="job-type-badge">
+            ${escapeHtml(category)}
+        </span>
 
 
-            <div class="job-meta">
-
-                <span>
-                    📍 ${escapeHtml(location)}
-                </span>
-
-                <span>
-                    🎓 ${escapeHtml(experience)}
-                </span>
-
-            </div>
+        <h3>
+            ${escapeHtml(
+                job.title || "Untitled Job"
+            )}
+        </h3>
 
 
-            <div class="job-card-bottom">
+        <p class="job-company">
+            ${escapeHtml(organization)}
+        </p>
 
-                <span class="deadline">
-                    ${escapeHtml(deadline)}
-                </span>
 
-                <a
-                    href="opportunity.html?id=${encodeURIComponent(job.id)}&type=job"
-                >
-                    View Job →
-                </a>
+        ${
+            shortDescription
+                ? `
+                    <p class="job-description-preview">
+                        ${escapeHtml(shortDescription)}
+                    </p>
+                  `
+                : ""
+        }
 
-            </div>
 
-        `;
+        <div class="job-meta">
 
-        jobsGrid.appendChild(card);
+            <span>
+                📍 ${escapeHtml(location)}
+            </span>
 
-    });
+            <span>
+                🎓 ${escapeHtml(experience)}
+            </span>
+
+        </div>
+
+
+        <div class="job-card-bottom">
+
+            <span class="deadline">
+                ${escapeHtml(deadline)}
+            </span>
+
+            <a
+                href="opportunity.html?id=${encodeURIComponent(job.id)}&type=job"
+            >
+                View Job →
+            </a>
+
+        </div>
+
+    `;
+
+    jobsGrid.appendChild(card);
+
+});
+
 
 
     // =====================================
