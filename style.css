@@ -376,7 +376,7 @@ img {
     z-index: 1;
 
     width: 100%;
-    padding: 80px 0;
+    padding: 60px 0;
 }
 
 .hero-content {
@@ -601,7 +601,7 @@ img {
     display: flex;
     align-items: center;
     gap: 45px;
-padding:50px;
+     padding:50px;
     margin-top:35px;
 }
 
@@ -609,6 +609,7 @@ padding:50px;
     display: flex;
     flex-direction: column;
     gap: 5px;
+   margin-top:35px;
 }
 
 .stat strong {
