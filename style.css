@@ -601,7 +601,7 @@ img {
     display: flex;
     align-items: center;
     gap: 45px;
-
+padding:50px;
     margin-top: 45px;
 }
 
